@@ -14,6 +14,14 @@
 				<p class="font-medium">Numbers → Words</p>
 				<p class="text-stone-400 text-sm">See a number, type the Indonesian</p>
 			</a>
+			<a
+				href="/words-to-numbers"
+				class="block rounded-lg bg-stone-800 border border-stone-700 px-5 py-4
+					hover:bg-stone-700 transition-colors"
+			>
+				<p class="font-medium">Words → Numbers</p>
+				<p class="text-stone-400 text-sm">See Indonesian words, type the number</p>
+			</a>
 		</div>
 	</div>
 </div>

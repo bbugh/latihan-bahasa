@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { numberToIndonesian, indonesianToNumber, checkAnswer } from './numbers';
+import { numberToIndonesian, indonesianToNumber, checkAnswer, checkNumberAnswer } from './numbers';
 
 describe('numberToIndonesian', () => {
   const cases: [number, string][] = [
@@ -419,6 +419,50 @@ describe('checkAnswer', () => {
     expect(result.wrongIndices).toContain(0); // lima instead of enam
     expect(result.wrongIndices).toContain(3); // belas instead of ratus
     expect(result.wrongIndices).toContain(6); // semblian misspelling
+  });
+});
+
+describe('checkNumberAnswer', () => {
+  it('correct number is correct', () => {
+    const result = checkNumberAnswer('dua ratus tiga puluh empat', '234');
+    expect(result.correct).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it('ignores whitespace in input', () => {
+    const result = checkNumberAnswer('dua puluh satu', '  21  ');
+    expect(result.correct).toBe(true);
+  });
+
+  it('accepts commas in input', () => {
+    const result = checkNumberAnswer('seribu dua ratus', '1,200');
+    expect(result.correct).toBe(true);
+  });
+
+  it('accepts periods as thousand separators', () => {
+    const result = checkNumberAnswer('seribu dua ratus', '1.200');
+    expect(result.correct).toBe(true);
+  });
+
+  it('wrong number is incorrect', () => {
+    const result = checkNumberAnswer('dua puluh satu', '22');
+    expect(result.correct).toBe(false);
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  it('empty input is incorrect', () => {
+    const result = checkNumberAnswer('dua puluh satu', '');
+    expect(result.correct).toBe(false);
+  });
+
+  it('non-numeric input is incorrect', () => {
+    const result = checkNumberAnswer('dua puluh satu', 'abc');
+    expect(result.correct).toBe(false);
+  });
+
+  it('zero works', () => {
+    const result = checkNumberAnswer('nol', '0');
+    expect(result.correct).toBe(true);
   });
 });
 

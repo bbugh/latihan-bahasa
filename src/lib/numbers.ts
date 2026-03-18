@@ -158,6 +158,28 @@ export function checkAnswer(expected: number, input: string): CheckResult {
   return { correct: false, errors, warnings, wrongIndices };
 }
 
+export interface NumberCheckResult {
+  correct: boolean;
+  errors: string[];
+}
+
+export function checkNumberAnswer(indonesianText: string, input: string): NumberCheckResult {
+  const trimmed = input.trim().replace(/[,\.]/g, '');
+  if (!trimmed) return { correct: false, errors: ['No answer given'] };
+
+  const num = Number(trimmed);
+  if (isNaN(num) || !Number.isInteger(num) || num < 0) {
+    return { correct: false, errors: ['Enter a valid number'] };
+  }
+
+  const expected = indonesianToNumber(indonesianText);
+  if (expected === null) return { correct: false, errors: ['Invalid question'] };
+
+  if (num === expected) return { correct: true, errors: [] };
+
+  return { correct: false, errors: ['Not the right number'] };
+}
+
 function editDistance(a: string, b: string): number {
   const m = a.length, n = b.length;
   const d: number[][] = Array.from({ length: m + 1 }, (_, i) =>
