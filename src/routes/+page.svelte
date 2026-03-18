@@ -26,14 +26,6 @@
 		inputEl?.focus();
 	}
 
-	function autoCheck() {
-		if (result?.correct) return;
-		const checked = checkAnswer(number, input);
-		if (checked.correct) {
-			result = checked;
-		}
-	}
-
 	type ColoredSpan = { text: string; wrong: boolean };
 
 	function buildOverlaySpans(text: string, wrongIndices: number[]): ColoredSpan[] {
@@ -99,7 +91,6 @@
 					bind:this={inputEl}
 					type="text"
 					bind:value={input}
-					oninput={autoCheck}
 					autofocus
 					placeholder="Type Indonesian here..."
 					readonly={result?.correct}
