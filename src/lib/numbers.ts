@@ -92,11 +92,12 @@ export interface CheckResult {
   correct: boolean;
   errors: string[];
   warnings: string[];
+  wrongIndices: number[];
 }
 
 export function checkAnswer(expected: number, input: string): CheckResult {
   const trimmed = input.trim().toLowerCase();
-  if (!trimmed) return { correct: false, errors: ['No answer given'], warnings: [] };
+  if (!trimmed) return { correct: false, errors: ['No answer given'], warnings: [], wrongIndices: [] };
 
   const expectedText = numberToIndonesian(expected);
   const words = trimmed.split(/\s+/);
@@ -104,43 +105,48 @@ export function checkAnswer(expected: number, input: string): CheckResult {
   const warnings: string[] = [];
 
   // Check for unrecognized words and suggest corrections
-  for (const word of words) {
-    if (ALL_WORDS.has(word)) continue;
-    const closest = findClosest(word);
+  const wrongIndices: number[] = [];
+  for (let i = 0; i < words.length; i++) {
+    if (ALL_WORDS.has(words[i])) continue;
+    wrongIndices.push(i);
+    const closest = findClosest(words[i]);
     if (closest) {
-      errors.push(`"${word}" is not a number word — did you mean "${closest}"?`);
+      errors.push(`"${words[i]}" is not a number word — did you mean "${closest}"?`);
     } else {
-      errors.push(`"${word}" is not a number word`);
+      errors.push(`"${words[i]}" is not a number word`);
     }
   }
 
-  if (errors.length > 0) return { correct: false, errors, warnings };
+  // If all words are valid, check if the answer is correct
+  if (errors.length === 0) {
+    const parsed = indonesianToNumber(trimmed);
 
-  // All words are valid — check if the answer is correct
-  const parsed = indonesianToNumber(trimmed);
-
-  if (parsed === expected) {
-    // Correct, but check for non-canonical "satu X" forms
-    for (const [nonCanonical, canonical] of Object.entries(SE_FORMS)) {
-      if (trimmed.includes(nonCanonical)) {
-        warnings.push(`Correct, but use "${canonical}" instead of "${nonCanonical}"`);
+    if (parsed === expected) {
+      // Correct, but check for non-canonical "satu X" forms
+      for (const [nonCanonical, canonical] of Object.entries(SE_FORMS)) {
+        if (trimmed.includes(nonCanonical)) {
+          warnings.push(`Correct, but use "${canonical}" instead of "${nonCanonical}"`);
+        }
       }
+      return { correct: true, errors: [], warnings, wrongIndices: [] };
     }
-    return { correct: true, errors: [], warnings };
   }
 
-  // Wrong answer with valid words — say which words are wrong without revealing the answer
+  // Wrong answer — also check which valid words are in wrong positions
   const expectedWords = expectedText.split(' ');
   const inputWords = trimmed.split(/\s+/);
   const maxLen = Math.max(expectedWords.length, inputWords.length);
 
   for (let i = 0; i < maxLen; i++) {
+    if (wrongIndices.includes(i)) continue; // already marked as misspelled
     if (i >= inputWords.length) {
       errors.push('Missing words at the end');
       break;
     } else if (i >= expectedWords.length) {
+      wrongIndices.push(i);
       errors.push(`Unexpected extra word "${inputWords[i]}"`);
     } else if (inputWords[i] !== expectedWords[i]) {
+      wrongIndices.push(i);
       errors.push(`"${inputWords[i]}" is wrong`);
     }
   }
@@ -149,7 +155,7 @@ export function checkAnswer(expected: number, input: string): CheckResult {
     errors.push('Not quite right');
   }
 
-  return { correct: false, errors, warnings };
+  return { correct: false, errors, warnings, wrongIndices };
 }
 
 function editDistance(a: string, b: string): number {

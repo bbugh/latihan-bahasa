@@ -34,6 +34,32 @@
 		}
 	}
 
+	type ColoredSpan = { text: string; wrong: boolean };
+
+	function buildOverlaySpans(text: string, wrongIndices: number[]): ColoredSpan[] {
+		const spans: ColoredSpan[] = [];
+		const wrongSet = new Set(wrongIndices);
+		let wordIndex = 0;
+		let i = 0;
+		while (i < text.length) {
+			if (text[i] === ' ') {
+				// collect contiguous spaces
+				let j = i;
+				while (j < text.length && text[j] === ' ') j++;
+				spans.push({ text: text.slice(i, j), wrong: false });
+				i = j;
+			} else {
+				// collect a word
+				let j = i;
+				while (j < text.length && text[j] !== ' ') j++;
+				spans.push({ text: text.slice(i, j), wrong: wrongSet.has(wordIndex) });
+				wordIndex++;
+				i = j;
+			}
+		}
+		return spans;
+	}
+
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Enter') {
 			if (result?.correct) next();
@@ -58,18 +84,31 @@
 		</div>
 
 		<div class="space-y-4">
-			<input
-				bind:this={inputEl}
-				type="text"
-				bind:value={input}
-				oninput={autoCheck}
-				autofocus
-				placeholder="Type Indonesian here..."
-				readonly={result?.correct}
-				class="w-full rounded-lg bg-stone-800 px-4 py-3 text-lg border
-					placeholder:text-stone-600 focus:outline-none
-					{result?.correct ? 'border-emerald-600' : result ? 'border-red-700' : 'border-stone-700 focus:border-stone-500'}"
-			/>
+			<div class="relative">
+				<div
+					aria-hidden="true"
+					class="absolute inset-0 z-10 rounded-lg border border-transparent px-4 py-3 text-lg pointer-events-none whitespace-pre"
+				>
+					{#if result && !result.correct && result.wrongIndices.length > 0}
+						{#each buildOverlaySpans(input, result.wrongIndices) as span}<span class={span.wrong ? 'text-red-400' : 'text-stone-100'}>{span.text}</span>{/each}
+					{:else}
+						<span class="text-transparent">{input}</span>
+					{/if}
+				</div>
+				<input
+					bind:this={inputEl}
+					type="text"
+					bind:value={input}
+					oninput={autoCheck}
+					autofocus
+					placeholder="Type Indonesian here..."
+					readonly={result?.correct}
+					class="relative w-full rounded-lg bg-stone-800 px-4 py-3 text-lg border
+						placeholder:text-stone-600 focus:outline-none
+						{result?.correct ? 'border-emerald-600' : result ? 'border-red-700' : 'border-stone-700 focus:border-stone-500'}
+						{result && !result.correct && result.wrongIndices.length > 0 ? 'text-transparent caret-stone-100' : ''}"
+				/>
+			</div>
 
 			<div class="flex gap-3">
 				<button

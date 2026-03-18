@@ -370,6 +370,56 @@ describe('checkAnswer', () => {
     expect(result.correct).toBe(false);
     expect(result.errors.some(e => e.includes('belas'))).toBe(true);
   });
+
+  // wrongIndices
+  it('correct answer has empty wrongIndices', () => {
+    const result = checkAnswer(21, 'dua puluh satu');
+    expect(result.wrongIndices).toEqual([]);
+  });
+
+  it('empty input has empty wrongIndices', () => {
+    const result = checkAnswer(21, '');
+    expect(result.wrongIndices).toEqual([]);
+  });
+
+  it('wrongIndices points to the wrong word position', () => {
+    // 21 = "dua puluh satu", input has "dua" at position 2 instead of "satu"
+    const result = checkAnswer(21, 'dua puluh dua');
+    expect(result.wrongIndices).toEqual([2]);
+  });
+
+  it('wrongIndices points to misspelled word positions', () => {
+    const result = checkAnswer(200, 'duap ratush');
+    expect(result.wrongIndices).toEqual([0, 1]);
+  });
+
+  it('wrongIndices marks only the wrong word in a longer answer', () => {
+    // 3490 = "tiga ribu empat ratus sembilan puluh"
+    // input has "lima" at position 2 instead of "empat"
+    const result = checkAnswer(3490, 'tiga ribu lima ratus sembilan puluh');
+    expect(result.wrongIndices).toEqual([2]);
+  });
+
+  it('wrongIndices marks extra words', () => {
+    // 20 = "dua puluh", input has extra "satu" at position 2
+    const result = checkAnswer(20, 'dua puluh satu');
+    expect(result.wrongIndices).toEqual([2]);
+  });
+
+  it('wrongIndices marks multiple wrong words', () => {
+    // 21 = "dua puluh satu"
+    const result = checkAnswer(21, 'tiga puluh dua');
+    expect(result.wrongIndices).toEqual([0, 2]);
+  });
+
+  it('wrongIndices marks misspelled AND wrong-position words together', () => {
+    // 6279 = "enam ribu dua ratus tujuh puluh sembilan"
+    // "lima" is wrong (position 0), "belas" is wrong (position 3), "semblian" is misspelled (position 6)
+    const result = checkAnswer(6279, 'lima ribu dua belas tujuh puluh semblian');
+    expect(result.wrongIndices).toContain(0); // lima instead of enam
+    expect(result.wrongIndices).toContain(3); // belas instead of ratus
+    expect(result.wrongIndices).toContain(6); // semblian misspelling
+  });
 });
 
 describe('roundtrip', () => {
