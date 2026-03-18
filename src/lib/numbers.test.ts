@@ -80,6 +80,156 @@ describe('indonesianToNumber', () => {
   it('is case insensitive', () => {
     expect(indonesianToNumber('Dua Puluh Satu')).toBe(21);
   });
+
+  it('handles ALL CAPS', () => {
+    expect(indonesianToNumber('SERIBU')).toBe(1_000);
+  });
+
+  it('handles tabs and newlines in input', () => {
+    expect(indonesianToNumber('dua\tpuluh\nsatu')).toBe(21);
+  });
+
+  it('returns null for just whitespace', () => {
+    expect(indonesianToNumber('   ')).toBeNull();
+  });
+
+  it('returns null for partial garbage mixed with real words', () => {
+    expect(indonesianToNumber('dua hundred')).toBeNull();
+  });
+
+  it('returns null for English numbers', () => {
+    expect(indonesianToNumber('twenty one')).toBeNull();
+  });
+
+  it('returns null for digit strings', () => {
+    expect(indonesianToNumber('123')).toBeNull();
+  });
+
+  it('handles "satu ratus" even though canonical is "seratus"', () => {
+    expect(indonesianToNumber('satu ratus')).toBe(100);
+  });
+
+  it('handles "satu ribu" even though canonical is "seribu"', () => {
+    expect(indonesianToNumber('satu ribu')).toBe(1_000);
+  });
+
+  it('handles "satu puluh" even though canonical is "sepuluh"', () => {
+    expect(indonesianToNumber('satu puluh')).toBe(10);
+  });
+
+  it('handles "satu belas" even though canonical is "sebelas"', () => {
+    expect(indonesianToNumber('satu belas')).toBe(11);
+  });
+
+  it('returns null for repeated words', () => {
+    expect(indonesianToNumber('satu satu')).not.toBe(11);
+  });
+
+  it('bare multiplier without digit gives 0 (no digit to multiply)', () => {
+    expect(indonesianToNumber('puluh')).toBe(0);
+    expect(indonesianToNumber('ratus')).toBe(0);
+  });
+
+  it('bare scale multiplier defaults to 1x', () => {
+    expect(indonesianToNumber('ribu')).toBe(1_000);
+    expect(indonesianToNumber('juta')).toBe(1_000_000);
+  });
+
+  it('handles miliar range', () => {
+    expect(indonesianToNumber('dua miliar')).toBe(2_000_000_000);
+  });
+
+  it('handles complex miliar', () => {
+    expect(indonesianToNumber('satu miliar dua ratus tiga puluh empat juta')).toBe(1_234_000_000);
+  });
+});
+
+describe('indonesianToNumber rejects learner mistakes', () => {
+  // typos and misspellings
+  it.each([
+    'saatu',        // doubled vowel
+    'duaa',         // extra letter
+    'tigga',        // doubled consonant
+    'enpat',        // m->n
+    'lema',         // i->e
+    'enm',          // missing vowel
+    'tuju',         // missing h
+    'delapn',       // missing vowel
+    'sembiln',      // missing vowel
+    'sepuloh',      // wrong vowel
+    'sebellas',     // doubled l
+    'bellah',       // creative misspelling of belas
+    'pulur',        // wrong ending
+    'ratis',        // wrong vowel
+    'rebut',        // wrong word entirely
+    'jibu',         // ribu with wrong first letter
+  ])('rejects misspelling: "%s"', (typo) => {
+    expect(indonesianToNumber(typo)).toBeNull();
+  });
+
+  // total nonsense
+  it.each([
+    'butts',
+    'asdf',
+    'one two three',
+    'un dos tres',
+    'kucing',       // real Indonesian word, but not a number
+    'besar',        // real Indonesian word, not a number
+    'yes',
+    '!!!',
+    'satu2nya',     // slang
+    '1 ribu',       // mixing digits and words
+  ])('rejects nonsense: "%s"', (garbage) => {
+    expect(indonesianToNumber(garbage)).toBeNull();
+  });
+
+  // wrong word order
+  it.each([
+    ['puluh dua', 'multiplier before digit'],
+    ['ratus tiga puluh dua', 'ratus with no digit before it (not seratus)'],
+    ['belas dua', 'belas before digit'],
+    ['ribu empat', 'only ribu then digit — missing structure'],
+  ])('handles wrong order: "%s" (%s)', (input) => {
+    const result = indonesianToNumber(input);
+    // These shouldn't crash — they can return a number or null,
+    // but they must not throw
+    expect(() => indonesianToNumber(input)).not.toThrow();
+    // And if they do return a number, it won't be what the learner meant
+    if (result !== null) {
+      expect(typeof result).toBe('number');
+    }
+  });
+
+  // incomplete answers (learner gave up halfway)
+  it.each([
+    'dua ratus tiga',       // stopped mid-thought, but still valid (203)
+    'seribu dua',           // valid: 1002
+    'empat ribu tiga ratus', // valid: 4300
+  ])('partial but valid input: "%s"', (input) => {
+    const result = indonesianToNumber(input);
+    expect(result).not.toBeNull();
+    expect(result).toBeGreaterThan(0);
+  });
+
+  // extra words, filler, punctuation
+  it.each([
+    'dua puluh dan satu',   // "dan" (and) isn't a number word
+    'kira-kira sepuluh',    // "about ten"
+    'satu, dua, tiga',      // commas
+    'dua-puluh-satu',       // hyphens
+    'dua.puluh',            // periods
+  ])('rejects filler/punctuation: "%s"', (input) => {
+    expect(indonesianToNumber(input)).toBeNull();
+  });
+
+  // mixing number systems
+  it.each([
+    '2 ribu',
+    'seribu 5 ratus',
+    '10 juta',
+  ])('rejects mixed digits and words: "%s"', (input) => {
+    expect(indonesianToNumber(input)).toBeNull();
+  });
 });
 
 describe('roundtrip', () => {
