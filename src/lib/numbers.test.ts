@@ -464,6 +464,48 @@ describe('checkNumberAnswer', () => {
     const result = checkNumberAnswer('nol', '0');
     expect(result.correct).toBe(true);
   });
+
+  it('correct answer has empty wrongDigits', () => {
+    const result = checkNumberAnswer('dua ratus tiga puluh empat', '234');
+    expect(result.wrongDigits).toEqual([]);
+  });
+
+  it('identifies wrong hundreds digit and its Indonesian word', () => {
+    // 4679 = "empat ribu enam ratus tujuh puluh sembilan"
+    // user types 4579 — the "5" is wrong, should be "enam"
+    const result = checkNumberAnswer('empat ribu enam ratus tujuh puluh sembilan', '4579');
+    expect(result.wrongDigits).toEqual([
+      { position: 1, word: 'enam' },
+    ]);
+  });
+
+  it('identifies wrong ones digit', () => {
+    // 21 = "dua puluh satu", user types 23
+    const result = checkNumberAnswer('dua puluh satu', '23');
+    expect(result.wrongDigits).toEqual([
+      { position: 1, word: 'satu' },
+    ]);
+  });
+
+  it('identifies multiple wrong digits', () => {
+    // 234 = "dua ratus tiga puluh empat", user types 567
+    const result = checkNumberAnswer('dua ratus tiga puluh empat', '567');
+    expect(result.wrongDigits.length).toBe(3);
+  });
+
+  it('handles different digit counts — too few digits', () => {
+    // 234 = "dua ratus tiga puluh empat", user types 34
+    const result = checkNumberAnswer('dua ratus tiga puluh empat', '34');
+    expect(result.correct).toBe(false);
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  it('handles different digit counts — too many digits', () => {
+    // 21 = "dua puluh satu", user types 210
+    const result = checkNumberAnswer('dua puluh satu', '210');
+    expect(result.correct).toBe(false);
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
 });
 
 describe('roundtrip', () => {

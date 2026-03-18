@@ -50,18 +50,31 @@
 		</div>
 
 		<div class="space-y-4">
-			<input
-				bind:this={inputEl}
-				type="text"
-				inputmode="numeric"
-				bind:value={input}
-				autofocus
-				placeholder="Type the number..."
-				readonly={result?.correct}
-				class="w-full rounded-lg bg-stone-800 px-4 py-3 text-lg border
-					placeholder:text-stone-600 focus:outline-none
-					{result?.correct ? 'border-emerald-600' : result ? 'border-red-700' : 'border-stone-700 focus:border-stone-500'}"
-			/>
+			<div class="relative">
+				<div
+					aria-hidden="true"
+					class="absolute inset-0 z-10 rounded-lg border border-transparent px-4 py-3 text-lg pointer-events-none whitespace-pre"
+				>
+					{#if result && !result.correct && result.wrongDigits.length > 0}
+						{#each input.trim().split('') as char, i}<span class={result.wrongDigits.some(d => d.position === i) ? 'text-red-400' : 'text-stone-100'}>{char}</span>{/each}
+					{:else}
+						<span class="text-transparent">{input}</span>
+					{/if}
+				</div>
+				<input
+					bind:this={inputEl}
+					type="text"
+					inputmode="numeric"
+					bind:value={input}
+					autofocus
+					placeholder="Type the number..."
+					readonly={result?.correct}
+					class="relative w-full rounded-lg bg-stone-800 px-4 py-3 text-lg border
+						placeholder:text-stone-600 focus:outline-none
+						{result?.correct ? 'border-emerald-600' : result ? 'border-red-700' : 'border-stone-700 focus:border-stone-500'}
+						{result && !result.correct && result.wrongDigits.length > 0 ? 'text-transparent caret-stone-100' : ''}"
+				/>
+			</div>
 
 			<div class="flex gap-3">
 				<button

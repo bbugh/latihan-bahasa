@@ -158,26 +158,97 @@ export function checkAnswer(expected: number, input: string): CheckResult {
   return { correct: false, errors, warnings, wrongIndices };
 }
 
+export interface WrongDigit {
+  position: number;
+  word: string;
+}
+
 export interface NumberCheckResult {
   correct: boolean;
   errors: string[];
+  wrongDigits: WrongDigit[];
+}
+
+// Maps each digit of a number to the Indonesian word it comes from.
+// e.g. 4679 → ['empat', 'enam', 'tujuh', 'sembilan']
+function digitWords(n: number): string[] {
+  if (n === 0) return ['nol'];
+  const text = numberToIndonesian(n);
+  const words = text.split(' ');
+
+  const result: string[] = [];
+  let remaining = n;
+
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    const digit = ONES.indexOf(word);
+    if (digit > 0) {
+      // Check if next word is a positional multiplier
+      const next = words[i + 1];
+      if (next === 'ribu' || next === 'juta' || next === 'miliar') {
+        result.push(word);
+      } else if (next === 'ratus') {
+        result.push(word);
+      } else if (next === 'puluh') {
+        result.push(word);
+      } else if (next === 'belas') {
+        // digit + belas = 1X, the tens digit is 1 (from belas), ones digit is from word
+        result.push(word);
+      } else {
+        // standalone digit (ones place or after puluh)
+        result.push(word);
+      }
+    } else if (word === 'sepuluh') {
+      result.push('sepuluh');
+      result.push('sepuluh');
+    } else if (word === 'sebelas') {
+      result.push('sebelas');
+      result.push('sebelas');
+    } else if (word.startsWith('se') && (word === 'seratus' || word === 'seribu')) {
+      result.push(word);
+    }
+    // skip positional words: puluh, belas, ratus, ribu, juta, miliar
+    // and words already handled by 'se-' prefix
+  }
+
+  return result;
 }
 
 export function checkNumberAnswer(indonesianText: string, input: string): NumberCheckResult {
+  const empty: WrongDigit[] = [];
   const trimmed = input.trim().replace(/[,\.]/g, '');
-  if (!trimmed) return { correct: false, errors: ['No answer given'] };
+  if (!trimmed) return { correct: false, errors: ['No answer given'], wrongDigits: empty };
 
   const num = Number(trimmed);
   if (isNaN(num) || !Number.isInteger(num) || num < 0) {
-    return { correct: false, errors: ['Enter a valid number'] };
+    return { correct: false, errors: ['Enter a valid number'], wrongDigits: empty };
   }
 
   const expected = indonesianToNumber(indonesianText);
-  if (expected === null) return { correct: false, errors: ['Invalid question'] };
+  if (expected === null) return { correct: false, errors: ['Invalid question'], wrongDigits: empty };
 
-  if (num === expected) return { correct: true, errors: [] };
+  if (num === expected) return { correct: true, errors: [], wrongDigits: empty };
 
-  return { correct: false, errors: ['Not the right number'] };
+  const expectedStr = String(expected);
+  const inputStr = String(num);
+
+  if (expectedStr.length !== inputStr.length) {
+    return { correct: false, errors: [`Expected a ${expectedStr.length}-digit number`], wrongDigits: empty };
+  }
+
+  // Compare digit by digit, mapping each digit back to its Indonesian word
+  const dw = digitWords(expected);
+  const wrongDigits: WrongDigit[] = [];
+
+  for (let i = 0; i < expectedStr.length; i++) {
+    if (inputStr[i] !== expectedStr[i]) {
+      wrongDigits.push({ position: i, word: dw[i] || '' });
+    }
+  }
+
+  const errors = wrongDigits.map(d => `"${d.word}" is not ${inputStr[d.position]}`);
+
+  return { correct: false, errors, wrongDigits };
 }
 
 function editDistance(a: string, b: string): number {
