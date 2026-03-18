@@ -316,17 +316,34 @@ describe('checkAnswer', () => {
     expect(result.errors.some(e => e.includes('butts'))).toBe(true);
   });
 
-  // valid words but wrong answer — say what they actually spelled
-  it('tells you what number you actually wrote', () => {
+  // valid words but wrong answer — list which words are wrong, without revealing the answer
+  it('says which word is wrong without giving the answer', () => {
     const result = checkAnswer(21, 'dua puluh dua');
     expect(result.correct).toBe(false);
-    expect(result.errors.some(e => e.includes('22'))).toBe(true);
+    // should say "dua" is wrong, should NOT reveal "satu"
+    expect(result.errors.some(e => e.includes('dua'))).toBe(true);
+    expect(result.errors.some(e => e.includes('satu'))).toBe(false);
   });
 
-  it('tells you the expected answer when words are valid but wrong number', () => {
+  it('identifies the specific wrong word in a longer answer', () => {
+    const result = checkAnswer(3490, 'tiga ribu lima ratus sembilan puluh');
+    expect(result.correct).toBe(false);
+    expect(result.errors.some(e => e.includes('lima'))).toBe(true);
+    // should not reveal the correct word
+    expect(result.errors.some(e => e.includes('empat'))).toBe(false);
+  });
+
+  it('identifies missing words without saying what they are', () => {
     const result = checkAnswer(4321, 'empat ribu tiga ratus');
     expect(result.correct).toBe(false);
-    expect(result.errors.some(e => e.includes('4,300') || e.includes('4300'))).toBe(true);
+    expect(result.errors.some(e => /missing/i.test(e))).toBe(true);
+  });
+
+  it('identifies extra words', () => {
+    const result = checkAnswer(20, 'dua puluh satu');
+    expect(result.correct).toBe(false);
+    expect(result.errors.some(e => e.includes('satu'))).toBe(true);
+    expect(result.errors.some(e => /extra|unexpected/i.test(e))).toBe(true);
   });
 
   // close typos

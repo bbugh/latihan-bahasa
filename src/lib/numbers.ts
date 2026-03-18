@@ -129,11 +129,24 @@ export function checkAnswer(expected: number, input: string): CheckResult {
     return { correct: true, errors: [], warnings };
   }
 
-  // Wrong answer with valid words
-  if (parsed !== null) {
-    errors.push(`That spells out ${parsed.toLocaleString()}, not ${expected.toLocaleString()}`);
-  } else {
-    errors.push(`Expected: "${expectedText}"`);
+  // Wrong answer with valid words — say which words are wrong without revealing the answer
+  const expectedWords = expectedText.split(' ');
+  const inputWords = trimmed.split(/\s+/);
+  const maxLen = Math.max(expectedWords.length, inputWords.length);
+
+  for (let i = 0; i < maxLen; i++) {
+    if (i >= inputWords.length) {
+      errors.push('Missing words at the end');
+      break;
+    } else if (i >= expectedWords.length) {
+      errors.push(`Unexpected extra word "${inputWords[i]}"`);
+    } else if (inputWords[i] !== expectedWords[i]) {
+      errors.push(`"${inputWords[i]}" is wrong`);
+    }
+  }
+
+  if (errors.length === 0) {
+    errors.push('Not quite right');
   }
 
   return { correct: false, errors, warnings };
