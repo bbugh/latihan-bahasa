@@ -71,3 +71,91 @@ export function indonesianToNumber(text: string): number | null {
 
   return total + group + current;
 }
+
+// -- Answer checking with feedback --
+
+const ALL_WORDS = new Set([
+  'nol', ...ONES.filter(Boolean),
+  'belas', 'puluh', 'ratus',
+  ...SCALES.filter(Boolean),
+  'sepuluh', 'sebelas', 'seratus', 'seribu',
+]);
+
+const SE_FORMS: Record<string, string> = {
+  'satu puluh': 'sepuluh',
+  'satu belas': 'sebelas',
+  'satu ratus': 'seratus',
+  'satu ribu': 'seribu',
+};
+
+export interface CheckResult {
+  correct: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+export function checkAnswer(expected: number, input: string): CheckResult {
+  const trimmed = input.trim().toLowerCase();
+  if (!trimmed) return { correct: false, errors: ['No answer given'], warnings: [] };
+
+  const expectedText = numberToIndonesian(expected);
+  const words = trimmed.split(/\s+/);
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  // Check for unrecognized words and suggest corrections
+  for (const word of words) {
+    if (ALL_WORDS.has(word)) continue;
+    const closest = findClosest(word);
+    if (closest) {
+      errors.push(`"${word}" is not a number word — did you mean "${closest}"?`);
+    } else {
+      errors.push(`"${word}" is not a number word`);
+    }
+  }
+
+  if (errors.length > 0) return { correct: false, errors, warnings };
+
+  // All words are valid — check if the answer is correct
+  const parsed = indonesianToNumber(trimmed);
+
+  if (parsed === expected) {
+    // Correct, but check for non-canonical "satu X" forms
+    for (const [nonCanonical, canonical] of Object.entries(SE_FORMS)) {
+      if (trimmed.includes(nonCanonical)) {
+        warnings.push(`Correct, but use "${canonical}" instead of "${nonCanonical}"`);
+      }
+    }
+    return { correct: true, errors: [], warnings };
+  }
+
+  // Wrong answer with valid words
+  if (parsed !== null) {
+    errors.push(`That spells out ${parsed.toLocaleString()}, not ${expected.toLocaleString()}`);
+  } else {
+    errors.push(`Expected: "${expectedText}"`);
+  }
+
+  return { correct: false, errors, warnings };
+}
+
+function editDistance(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  const d: number[][] = Array.from({ length: m + 1 }, (_, i) =>
+    Array.from({ length: n + 1 }, (_, j) => i === 0 ? j : j === 0 ? i : 0)
+  );
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+  return d[m][n];
+}
+
+function findClosest(word: string): string | null {
+  let best: string | null = null;
+  let bestDist = Infinity;
+  for (const candidate of ALL_WORDS) {
+    const dist = editDistance(word, candidate);
+    if (dist < bestDist) { bestDist = dist; best = candidate; }
+  }
+  return best && bestDist <= Math.ceil(best.length / 2) ? best : null;
+}

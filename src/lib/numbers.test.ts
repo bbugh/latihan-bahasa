@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { numberToIndonesian, indonesianToNumber } from './numbers';
+import { numberToIndonesian, indonesianToNumber, checkAnswer } from './numbers';
 
 describe('numberToIndonesian', () => {
   const cases: [number, string][] = [
@@ -229,6 +229,129 @@ describe('indonesianToNumber rejects learner mistakes', () => {
     '10 juta',
   ])('rejects mixed digits and words: "%s"', (input) => {
     expect(indonesianToNumber(input)).toBeNull();
+  });
+});
+
+describe('checkAnswer', () => {
+  // correct answers
+  it('exact match is correct', () => {
+    const result = checkAnswer(21, 'dua puluh satu');
+    expect(result.correct).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it('is case insensitive', () => {
+    expect(checkAnswer(21, 'Dua Puluh Satu').correct).toBe(true);
+  });
+
+  it('ignores extra whitespace', () => {
+    expect(checkAnswer(21, '  dua   puluh  satu  ').correct).toBe(true);
+  });
+
+  // non-canonical forms — correct but should warn
+  it('accepts "satu ratus" but warns to use "seratus"', () => {
+    const result = checkAnswer(100, 'satu ratus');
+    expect(result.correct).toBe(true);
+    expect(result.warnings.length).toBeGreaterThan(0);
+    expect(result.warnings.some(w => w.includes('seratus'))).toBe(true);
+  });
+
+  it('accepts "satu ribu" but warns to use "seribu"', () => {
+    const result = checkAnswer(1000, 'satu ribu');
+    expect(result.correct).toBe(true);
+    expect(result.warnings.length).toBeGreaterThan(0);
+    expect(result.warnings.some(w => w.includes('seribu'))).toBe(true);
+  });
+
+  it('accepts "satu belas" but warns to use "sebelas"', () => {
+    const result = checkAnswer(11, 'satu belas');
+    expect(result.correct).toBe(true);
+    expect(result.warnings.some(w => w.includes('sebelas'))).toBe(true);
+  });
+
+  it('accepts "satu puluh" but warns to use "sepuluh"', () => {
+    const result = checkAnswer(10, 'satu puluh');
+    expect(result.correct).toBe(true);
+    expect(result.warnings.some(w => w.includes('sepuluh'))).toBe(true);
+  });
+
+  it('no warnings on canonical form', () => {
+    const result = checkAnswer(100, 'seratus');
+    expect(result.correct).toBe(true);
+    expect(result.warnings).toEqual([]);
+  });
+
+  // empty input
+  it('reports empty input', () => {
+    const result = checkAnswer(21, '');
+    expect(result.correct).toBe(false);
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  // misspelled words — identify the bad word and suggest the fix
+  it('identifies misspelled digit and suggests correction', () => {
+    const result = checkAnswer(200, 'duap ratus');
+    expect(result.correct).toBe(false);
+    expect(result.errors.some(e => e.includes('duap'))).toBe(true);
+    expect(result.errors.some(e => e.includes('dua'))).toBe(true);
+  });
+
+  it('identifies misspelled multiplier and suggests correction', () => {
+    const result = checkAnswer(200, 'dua ratush');
+    expect(result.correct).toBe(false);
+    expect(result.errors.some(e => e.includes('ratush'))).toBe(true);
+    expect(result.errors.some(e => e.includes('ratus'))).toBe(true);
+  });
+
+  it('identifies multiple misspellings', () => {
+    const result = checkAnswer(200, 'duap ratush');
+    expect(result.correct).toBe(false);
+    expect(result.errors.some(e => e.includes('duap'))).toBe(true);
+    expect(result.errors.some(e => e.includes('ratush'))).toBe(true);
+  });
+
+  it('flags completely unrecognizable words without suggestion', () => {
+    const result = checkAnswer(21, 'butts');
+    expect(result.correct).toBe(false);
+    expect(result.errors.some(e => e.includes('butts'))).toBe(true);
+  });
+
+  // valid words but wrong answer — say what they actually spelled
+  it('tells you what number you actually wrote', () => {
+    const result = checkAnswer(21, 'dua puluh dua');
+    expect(result.correct).toBe(false);
+    expect(result.errors.some(e => e.includes('22'))).toBe(true);
+  });
+
+  it('tells you the expected answer when words are valid but wrong number', () => {
+    const result = checkAnswer(4321, 'empat ribu tiga ratus');
+    expect(result.correct).toBe(false);
+    expect(result.errors.some(e => e.includes('4,300') || e.includes('4300'))).toBe(true);
+  });
+
+  // close typos
+  it('suggests "tujuh" for "tuju"', () => {
+    const result = checkAnswer(7, 'tuju');
+    expect(result.correct).toBe(false);
+    expect(result.errors.some(e => e.includes('tujuh'))).toBe(true);
+  });
+
+  it('suggests "sembilan" for "sembiln"', () => {
+    const result = checkAnswer(9, 'sembiln');
+    expect(result.correct).toBe(false);
+    expect(result.errors.some(e => e.includes('sembilan'))).toBe(true);
+  });
+
+  it('suggests "puluh" for "pulur"', () => {
+    const result = checkAnswer(20, 'dua pulur');
+    expect(result.correct).toBe(false);
+    expect(result.errors.some(e => e.includes('puluh'))).toBe(true);
+  });
+
+  it('suggests "belas" for "bellah"', () => {
+    const result = checkAnswer(12, 'dua bellah');
+    expect(result.correct).toBe(false);
+    expect(result.errors.some(e => e.includes('belas'))).toBe(true);
   });
 });
 
