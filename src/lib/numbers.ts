@@ -1,6 +1,38 @@
 const ONES = ['', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan'];
 const SCALES = ['', 'ribu', 'juta', 'miliar', 'triliun', 'kuadriliun'];
 
+export interface PracticeNumberOptions {
+  maxDigits?: number;
+  zeroWeight?: number;
+}
+
+export function randomPracticeNumber(options: PracticeNumberOptions = {}): number {
+  const maxDigits = options.maxDigits ?? 4;
+  const zeroWeight = options.zeroWeight ?? 4;
+
+  // Pick how many digits (1 to maxDigits)
+  const digitCounts = Array.from({ length: maxDigits }, (_, i) => i + 1);
+  const numDigits = digitCounts[Math.floor(Math.random() * digitCounts.length)];
+
+  if (numDigits === 1) {
+    return Math.floor(Math.random() * 10);
+  }
+
+  // Build digit by digit. First digit is 1-9, rest are 0-9 with zero weighted.
+  // zeroWeight is a multiplier: 1 = uniform, 3 = zero is 3x more likely than other digits
+  const zeroProbability = zeroWeight / (zeroWeight + 9);
+  const digits: number[] = [Math.floor(Math.random() * 9) + 1];
+  for (let i = 1; i < numDigits; i++) {
+    if (Math.random() < zeroProbability) {
+      digits.push(0);
+    } else {
+      digits.push(Math.floor(Math.random() * 9) + 1);
+    }
+  }
+
+  return Number(digits.join(''));
+}
+
 export function numberToIndonesian(x: number): string {
   if (!x) return 'nol';
 

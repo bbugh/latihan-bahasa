@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { numberToIndonesian, indonesianToNumber, checkAnswer, checkNumberAnswer } from './numbers';
+import { numberToIndonesian, indonesianToNumber, checkAnswer, checkNumberAnswer, randomPracticeNumber } from './numbers';
 
 describe('numberToIndonesian', () => {
   const cases: [number, string][] = [
@@ -505,6 +505,52 @@ describe('checkNumberAnswer', () => {
     const result = checkNumberAnswer('dua puluh satu', '210');
     expect(result.correct).toBe(false);
     expect(result.errors.length).toBeGreaterThan(0);
+  });
+});
+
+describe('randomPracticeNumber', () => {
+  it('returns a non-negative integer', () => {
+    for (let i = 0; i < 100; i++) {
+      const n = randomPracticeNumber();
+      expect(Number.isInteger(n)).toBe(true);
+      expect(n).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it('respects max digits option', () => {
+    for (let i = 0; i < 100; i++) {
+      const n = randomPracticeNumber({ maxDigits: 2 });
+      expect(n).toBeLessThan(100);
+    }
+  });
+
+  it('produces zeros more often than uniform distribution', () => {
+    const results = Array.from({ length: 2000 }, () => randomPracticeNumber());
+    const multiDigit = results.filter(n => n >= 10);
+    const withZero = multiDigit.filter(n => String(n).includes('0'));
+    // Uniform would give ~19% of multi-digit numbers containing a zero
+    // With 3x weighting, should be noticeably higher
+    expect(withZero.length / multiDigit.length).toBeGreaterThan(0.25);
+  });
+
+  it('zeroWeight 0 produces no zeros in multi-digit numbers', () => {
+    const results = Array.from({ length: 1000 }, () =>
+      randomPracticeNumber({ maxDigits: 4, zeroWeight: 0 })
+    );
+    const withZero = results.filter(n => n > 9 && String(n).includes('0'));
+    expect(withZero.length).toBe(0);
+  });
+
+  it('zeroWeight 1 gives zero equal probability to other digits', () => {
+    // With weight 1, zero has 1/10 chance per digit — same as uniform
+    const results = Array.from({ length: 2000 }, () =>
+      randomPracticeNumber({ maxDigits: 3, zeroWeight: 1 })
+    );
+    const multiDigit = results.filter(n => n >= 10);
+    const withZero = multiDigit.filter(n => String(n).includes('0'));
+    // Uniform: ~10% chance per digit has a zero, so roughly 19% of 2-3 digit numbers
+    // Should be noticeably less than the default (3x) weighting
+    expect(withZero.length).toBeLessThan(multiDigit.length * 0.4);
   });
 });
 

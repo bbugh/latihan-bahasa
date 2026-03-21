@@ -1,25 +1,18 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import { numberToIndonesian, checkAnswer, type CheckResult } from '$lib/numbers';
+	import { numberToIndonesian, checkAnswer, randomPracticeNumber, type CheckResult } from '$lib/numbers';
 
-	let number = $state(randomNumber());
+	let number = $state(randomPracticeNumber());
 	let input = $state('');
 	let result: CheckResult | null = $state(null);
 	let inputEl: HTMLInputElement;
-
-	function randomNumber() {
-		// Weight toward smaller numbers initially, range 0–9999
-		const ranges = [10, 100, 1000, 10000];
-		const range = ranges[Math.floor(Math.random() * ranges.length)];
-		return Math.floor(Math.random() * range);
-	}
 
 	function submit() {
 		result = checkAnswer(number, input);
 	}
 
 	async function next() {
-		number = randomNumber();
+		number = randomPracticeNumber();
 		input = '';
 		result = null;
 		await tick();
