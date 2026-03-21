@@ -1,3 +1,7 @@
+<script lang="ts">
+	import { base } from '$app/paths';
+</script>
+
 <div class="min-h-screen bg-stone-900 text-stone-100 flex justify-center p-8">
 	<div class="w-full max-w-lg space-y-8">
 		<div class="text-center space-y-2">
@@ -7,7 +11,7 @@
 
 		<div class="space-y-3">
 			<a
-				href="/numbers-to-words"
+				href="{base}/numbers-to-words"
 				class="block rounded-lg bg-stone-800 border border-stone-700 px-5 py-4
 					hover:bg-stone-700 transition-colors"
 			>
@@ -15,7 +19,7 @@
 				<p class="text-stone-400 text-sm">See a number, type the Indonesian</p>
 			</a>
 			<a
-				href="/words-to-numbers"
+				href="{base}/words-to-numbers"
 				class="block rounded-lg bg-stone-800 border border-stone-700 px-5 py-4
 					hover:bg-stone-700 transition-colors"
 			>

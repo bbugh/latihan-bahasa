@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { tick } from 'svelte';
+	import { base } from '$app/paths';
 	import { numberToIndonesian, checkAnswer, randomPracticeNumber, type CheckResult } from '$lib/numbers';
 
 	let number = $state(randomPracticeNumber());
@@ -56,7 +57,7 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <div class="min-h-screen bg-stone-900 text-stone-100 flex items-center justify-center p-4">
-	<a href="/" class="absolute top-6 left-6 text-stone-500 hover:text-stone-300 text-lg transition-colors">← Back</a>
+	<a href="{base}/" class="absolute top-6 left-6 text-stone-500 hover:text-stone-300 text-lg transition-colors">← Back</a>
 	<div class="w-full max-w-lg space-y-8 h-[400px]">
 		<div class="text-center space-y-2">
 			<p class="text-stone-400 text-sm">Type the Indonesian words for this number</p>
