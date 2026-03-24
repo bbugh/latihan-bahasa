@@ -37,10 +37,11 @@ describe('checkVocabularyAnswer', () => {
     expect(result.correct).toBe(false);
   });
 
-  it('suggests correction for close misspelling', () => {
+  it('says almost for close misspelling without revealing answer', () => {
     const result = checkVocabularyAnswer('Januari', 'Janueri');
     expect(result.correct).toBe(false);
-    expect(result.errors.some(e => /close|almost|did you mean/i.test(e))).toBe(true);
+    expect(result.errors.some(e => /almost/i.test(e))).toBe(true);
+    expect(result.errors.some(e => e.includes('Januari'))).toBe(false);
   });
 });
 
