@@ -1,3 +1,5 @@
+import { editDistance } from './edit-distance';
+
 const ONES = ['', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan'];
 const SCALES = ['', 'ribu', 'juta', 'miliar', 'triliun', 'kuadriliun'];
 
@@ -281,17 +283,6 @@ export function checkNumberAnswer(indonesianText: string, input: string): Number
   const errors = wrongDigits.map(d => `"${d.word}" is not ${inputStr[d.position]}`);
 
   return { correct: false, errors, wrongDigits };
-}
-
-function editDistance(a: string, b: string): number {
-  const m = a.length, n = b.length;
-  const d: number[][] = Array.from({ length: m + 1 }, (_, i) =>
-    Array.from({ length: n + 1 }, (_, j) => i === 0 ? j : j === 0 ? i : 0)
-  );
-  for (let i = 1; i <= m; i++)
-    for (let j = 1; j <= n; j++)
-      d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
-  return d[m][n];
 }
 
 function findClosest(word: string): string | null {
