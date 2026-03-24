@@ -495,6 +495,14 @@ describe('checkNumberAnswer', () => {
     ]);
   });
 
+  it('shows useful error for wrong digit at a zero position', () => {
+    // 5603 = "lima ribu enam ratus tiga", user types 5417
+    const result = checkNumberAnswer('lima ribu enam ratus tiga', '5417');
+    expect(result.correct).toBe(false);
+    // No error message should contain empty quotes
+    expect(result.errors.every(e => !e.includes('""'))).toBe(true);
+  });
+
   it('identifies multiple wrong digits', () => {
     // 234 = "dua ratus tiga puluh empat", user types 567
     const result = checkNumberAnswer('dua ratus tiga puluh empat', '567');

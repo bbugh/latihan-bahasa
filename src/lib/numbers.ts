@@ -278,7 +278,9 @@ export function checkNumberAnswer(indonesianText: string, input: string): Number
     }
   }
 
-  const errors = wrongDigits.map(d => `"${d.word}" is not ${inputStr[d.position]}`);
+  const errors = wrongDigits.map(d =>
+    d.word ? `"${d.word}" is not ${inputStr[d.position]}` : `Digit ${d.position + 1} is wrong`
+  );
 
   return { correct: false, errors, wrongDigits };
 }
