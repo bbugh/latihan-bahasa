@@ -204,45 +204,43 @@ export interface NumberCheckResult {
 }
 
 // Maps each digit of a number to the Indonesian word it comes from.
+// For digits that are zero (no corresponding word), returns an empty string.
 // e.g. 4679 → ['empat', 'enam', 'tujuh', 'sembilan']
+// e.g. 7804 → ['tujuh', 'delapan', '', 'empat']
 function digitWords(n: number): string[] {
   if (n === 0) return ['nol'];
-  const text = numberToIndonesian(n);
-  const words = text.split(' ');
 
+  const str = String(n);
   const result: string[] = [];
-  let remaining = n;
 
-  for (let i = 0; i < words.length; i++) {
-    const word = words[i];
-    const digit = ONES.indexOf(word);
-    if (digit > 0) {
-      // Check if next word is a positional multiplier
-      const next = words[i + 1];
-      if (next === 'ribu' || next === 'juta' || next === 'miliar') {
+  for (let i = 0; i < str.length; i++) {
+    const d = Number(str[i]);
+    if (d === 0) {
+      result.push('');
+    } else if (d === 1) {
+      // Check context for "se-" forms
+      const posFromRight = str.length - 1 - i;
+      if (posFromRight === 3) result.push('seribu');
+      else if (posFromRight === 2) result.push('seratus');
+      else if (posFromRight === 1) {
+        // teens: the tens and ones digit both come from the teen word
+        const ones = Number(str[i + 1]);
+        const word = ones === 0 ? 'sepuluh' : ones === 1 ? 'sebelas' : ONES[ones] + ' belas';
         result.push(word);
-      } else if (next === 'ratus') {
         result.push(word);
-      } else if (next === 'puluh') {
-        result.push(word);
-      } else if (next === 'belas') {
-        // digit + belas = 1X, the tens digit is 1 (from belas), ones digit is from word
-        result.push(word);
+        i++; // skip the ones digit, already handled
       } else {
-        // standalone digit (ones place or after puluh)
-        result.push(word);
+        result.push(ONES[d]);
       }
-    } else if (word === 'sepuluh') {
-      result.push('sepuluh');
-      result.push('sepuluh');
-    } else if (word === 'sebelas') {
-      result.push('sebelas');
-      result.push('sebelas');
-    } else if (word.startsWith('se') && (word === 'seratus' || word === 'seribu')) {
-      result.push(word);
+    } else {
+      const posFromRight = str.length - 1 - i;
+      if (posFromRight === 1) {
+        // tens place: this digit + "puluh", and handle the ones digit
+        result.push(ONES[d] + ' puluh');
+      } else {
+        result.push(ONES[d]);
+      }
     }
-    // skip positional words: puluh, belas, ratus, ribu, juta, miliar
-    // and words already handled by 'se-' prefix
   }
 
   return result;

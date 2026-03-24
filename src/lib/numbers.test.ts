@@ -487,6 +487,14 @@ describe('checkNumberAnswer', () => {
     ]);
   });
 
+  it('identifies wrong digit when number has interior zeros', () => {
+    // 7804 = "tujuh ribu delapan ratus empat", user types 7805
+    const result = checkNumberAnswer('tujuh ribu delapan ratus empat', '7805');
+    expect(result.wrongDigits).toEqual([
+      { position: 3, word: 'empat' },
+    ]);
+  });
+
   it('identifies multiple wrong digits', () => {
     // 234 = "dua ratus tiga puluh empat", user types 567
     const result = checkNumberAnswer('dua ratus tiga puluh empat', '567');
