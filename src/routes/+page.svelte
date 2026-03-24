@@ -1,8 +1,14 @@
 <script lang="ts">
 	import { base } from '$app/paths';
 	import { QUIZ_REGISTRY } from '$lib/quizzes';
+	import type { QuizConfig } from '$lib/quiz';
 
-	const categories = Map.groupBy(QUIZ_REGISTRY, q => q.category);
+	const categories: [string, QuizConfig[]][] = [];
+	for (const quiz of QUIZ_REGISTRY) {
+		const existing = categories.find(([c]) => c === quiz.category);
+		if (existing) existing[1].push(quiz);
+		else categories.push([quiz.category, [quiz]]);
+	}
 </script>
 
 <div class="min-h-screen bg-stone-900 text-stone-100 flex justify-center p-8">
