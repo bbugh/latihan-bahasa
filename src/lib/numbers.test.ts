@@ -288,49 +288,47 @@ describe('checkAnswer', () => {
     expect(result.errors.length).toBeGreaterThan(0);
   });
 
-  // misspelled words — identify the bad word and suggest the fix
-  it('identifies misspelled digit and suggests correction', () => {
+  // misspelled words — identify the bad word without revealing the correct one
+  it('identifies misspelled word without suggesting correction', () => {
     const result = checkAnswer(200, 'duap ratus');
     expect(result.correct).toBe(false);
-    expect(result.errors.some(e => e.includes('duap'))).toBe(true);
-    expect(result.errors.some(e => e.includes('dua'))).toBe(true);
+    expect(result.errors.some(e => /\bduap\b/.test(e))).toBe(true);
+    expect(result.errors.some(e => /\bdua\b/.test(e))).toBe(false);
   });
 
-  it('identifies misspelled multiplier and suggests correction', () => {
+  it('identifies misspelled multiplier without suggesting correction', () => {
     const result = checkAnswer(200, 'dua ratush');
     expect(result.correct).toBe(false);
-    expect(result.errors.some(e => e.includes('ratush'))).toBe(true);
-    expect(result.errors.some(e => e.includes('ratus'))).toBe(true);
+    expect(result.errors.some(e => /\bratush\b/.test(e))).toBe(true);
+    expect(result.errors.some(e => /\bratus\b/.test(e))).toBe(false);
   });
 
   it('identifies multiple misspellings', () => {
     const result = checkAnswer(200, 'duap ratush');
     expect(result.correct).toBe(false);
-    expect(result.errors.some(e => e.includes('duap'))).toBe(true);
-    expect(result.errors.some(e => e.includes('ratush'))).toBe(true);
+    expect(result.errors.some(e => /\bduap\b/.test(e))).toBe(true);
+    expect(result.errors.some(e => /\bratush\b/.test(e))).toBe(true);
   });
 
   it('flags completely unrecognizable words without suggestion', () => {
     const result = checkAnswer(21, 'butts');
     expect(result.correct).toBe(false);
-    expect(result.errors.some(e => e.includes('butts'))).toBe(true);
+    expect(result.errors.some(e => /\bbutts\b/.test(e))).toBe(true);
   });
 
   // valid words but wrong answer — list which words are wrong, without revealing the answer
   it('says which word is wrong without giving the answer', () => {
     const result = checkAnswer(21, 'dua puluh dua');
     expect(result.correct).toBe(false);
-    // should say "dua" is wrong, should NOT reveal "satu"
-    expect(result.errors.some(e => e.includes('dua'))).toBe(true);
-    expect(result.errors.some(e => e.includes('satu'))).toBe(false);
+    expect(result.errors.some(e => /\bdua\b/.test(e))).toBe(true);
+    expect(result.errors.some(e => /\bsatu\b/.test(e))).toBe(false);
   });
 
   it('identifies the specific wrong word in a longer answer', () => {
     const result = checkAnswer(3490, 'tiga ribu lima ratus sembilan puluh');
     expect(result.correct).toBe(false);
-    expect(result.errors.some(e => e.includes('lima'))).toBe(true);
-    // should not reveal the correct word
-    expect(result.errors.some(e => e.includes('empat'))).toBe(false);
+    expect(result.errors.some(e => /\blima\b/.test(e))).toBe(true);
+    expect(result.errors.some(e => /\bempat\b/.test(e))).toBe(false);
   });
 
   it('identifies missing words without saying what they are', () => {
@@ -342,33 +340,37 @@ describe('checkAnswer', () => {
   it('identifies extra words', () => {
     const result = checkAnswer(20, 'dua puluh satu');
     expect(result.correct).toBe(false);
-    expect(result.errors.some(e => e.includes('satu'))).toBe(true);
+    expect(result.errors.some(e => /\bsatu\b/.test(e))).toBe(true);
     expect(result.errors.some(e => /extra|unexpected/i.test(e))).toBe(true);
   });
 
-  // close typos
-  it('suggests "tujuh" for "tuju"', () => {
+  // close typos — flag the word without revealing the answer
+  it('flags "tuju" as not a number word', () => {
     const result = checkAnswer(7, 'tuju');
     expect(result.correct).toBe(false);
-    expect(result.errors.some(e => e.includes('tujuh'))).toBe(true);
+    expect(result.errors.some(e => /\btuju\b/.test(e))).toBe(true);
+    expect(result.errors.some(e => /\btujuh\b/.test(e))).toBe(false);
   });
 
-  it('suggests "sembilan" for "sembiln"', () => {
+  it('flags "sembiln" as not a number word', () => {
     const result = checkAnswer(9, 'sembiln');
     expect(result.correct).toBe(false);
-    expect(result.errors.some(e => e.includes('sembilan'))).toBe(true);
+    expect(result.errors.some(e => /\bsembiln\b/.test(e))).toBe(true);
+    expect(result.errors.some(e => /\bsembilan\b/.test(e))).toBe(false);
   });
 
-  it('suggests "puluh" for "pulur"', () => {
+  it('flags "pulur" as not a number word', () => {
     const result = checkAnswer(20, 'dua pulur');
     expect(result.correct).toBe(false);
-    expect(result.errors.some(e => e.includes('puluh'))).toBe(true);
+    expect(result.errors.some(e => /\bpulur\b/.test(e))).toBe(true);
+    expect(result.errors.some(e => /\bpuluh\b/.test(e))).toBe(false);
   });
 
-  it('suggests "belas" for "bellah"', () => {
+  it('flags "bellah" as not a number word', () => {
     const result = checkAnswer(12, 'dua bellah');
     expect(result.correct).toBe(false);
-    expect(result.errors.some(e => e.includes('belas'))).toBe(true);
+    expect(result.errors.some(e => e.includes('bellah'))).toBe(true);
+    expect(result.errors.some(e => e.includes('belas'))).toBe(false);
   });
 
   // wrongIndices

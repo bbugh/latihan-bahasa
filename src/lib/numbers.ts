@@ -1,5 +1,3 @@
-import { editDistance } from './edit-distance';
-
 const ONES = ['', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan'];
 const SCALES = ['', 'ribu', 'juta', 'miliar', 'triliun', 'kuadriliun'];
 
@@ -138,17 +136,12 @@ export function checkAnswer(expected: number, input: string): CheckResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Check for unrecognized words and suggest corrections
+  // Check for unrecognized words
   const wrongIndices: number[] = [];
   for (let i = 0; i < words.length; i++) {
     if (ALL_WORDS.has(words[i])) continue;
     wrongIndices.push(i);
-    const closest = findClosest(words[i]);
-    if (closest) {
-      errors.push(`"${words[i]}" is not a number word — did you mean "${closest}"?`);
-    } else {
-      errors.push(`"${words[i]}" is not a number word`);
-    }
+    errors.push(`"${words[i]}" is not a number word`);
   }
 
   // If all words are valid, check if the answer is correct
@@ -285,12 +278,3 @@ export function checkNumberAnswer(indonesianText: string, input: string): Number
   return { correct: false, errors, wrongDigits };
 }
 
-function findClosest(word: string): string | null {
-  let best: string | null = null;
-  let bestDist = Infinity;
-  for (const candidate of ALL_WORDS) {
-    const dist = editDistance(word, candidate);
-    if (dist < bestDist) { bestDist = dist; best = candidate; }
-  }
-  return best && bestDist <= Math.ceil(best.length / 2) ? best : null;
-}
