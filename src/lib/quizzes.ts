@@ -31,28 +31,6 @@ function digitPositionsToSpans(wrongDigits: { position: number }[]): [number, nu
   return wrongDigits.map(d => [d.position, d.position + 1]);
 }
 
-/** Compare two strings character-by-character and return spans where they differ. */
-function charDiffSpans(input: string, expected: string): [number, number][] {
-  const spans: [number, number][] = [];
-  const len = Math.max(input.length, expected.length);
-  let spanStart: number | null = null;
-
-  for (let i = 0; i <= len; i++) {
-    const match = i < input.length && i < expected.length &&
-      input[i].toLowerCase() === expected[i].toLowerCase();
-
-    if (!match && i < input.length) {
-      if (spanStart === null) spanStart = i;
-    } else {
-      if (spanStart !== null) {
-        spans.push([spanStart, i]);
-        spanStart = null;
-      }
-    }
-  }
-  return spans;
-}
-
 // -- Quiz generators --
 
 function generateNumbersToWords(previous?: QuizQuestion): QuizQuestion {
@@ -134,12 +112,17 @@ function makeVocabularyGenerator(set: VocabularySet) {
 
         let wrongSpans: [number, number][] = [];
         if (!result.correct && trimmed) {
-          const isClose = result.errors.some(e => /almost|did you mean/i.test(e));
-          if (isClose) {
-            wrongSpans = charDiffSpans(trimmed, item.answer);
-          } else {
-            wrongSpans = [[0, trimmed.length]];
+          const expectedWords = item.answer.toLowerCase().split(/\s+/);
+          const inputWords = trimmed.toLowerCase().split(/\s+/);
+          const wrongIndices: number[] = [];
+          const maxLen = Math.max(expectedWords.length, inputWords.length);
+          for (let i = 0; i < maxLen; i++) {
+            if (i >= inputWords.length) break;
+            if (i >= expectedWords.length || inputWords[i] !== expectedWords[i]) {
+              wrongIndices.push(i);
+            }
           }
+          wrongSpans = wordIndicesToSpans(trimmed, wrongIndices);
         }
 
         return {

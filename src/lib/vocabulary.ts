@@ -25,7 +25,7 @@ export function checkVocabularyAnswer(expected: string, input: string): Vocabula
 
   const dist = editDistance(trimmed.toLowerCase(), expected.toLowerCase());
   if (dist <= Math.ceil(expected.length / 3)) {
-    return { correct: false, errors: ['Almost! Check the highlighted letters'] };
+    return { correct: false, errors: ['Almost! Check the highlighted word(s)'] };
   }
 
   return { correct: false, errors: ['Incorrect'] };

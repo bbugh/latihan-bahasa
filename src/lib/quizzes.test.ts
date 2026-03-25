@@ -125,19 +125,16 @@ describe('months-to-indonesian quiz', () => {
     expect(result.correct).toBe(true);
   });
 
-  it('check returns wrongSpans for close misspelling', () => {
+  it('check highlights the whole word for a single-word misspelling', () => {
     const q = config.generate();
-    // Swap two middle characters to create a close misspelling
     const chars = [...q.answer];
     if (chars.length > 3) {
       [chars[1], chars[2]] = [chars[2], chars[1]];
       const misspelled = chars.join('');
       const result = q.check(misspelled);
-      if (!result.correct && result.wrongSpans.length > 0) {
-        for (const [start, end] of result.wrongSpans) {
-          expect(start).toBeGreaterThanOrEqual(0);
-          expect(end).toBeGreaterThan(start);
-        }
+      if (!result.correct) {
+        // Single-word answer: entire word should be one span
+        expect(result.wrongSpans).toEqual([[0, misspelled.length]]);
       }
     }
   });
