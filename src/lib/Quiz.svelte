@@ -5,7 +5,8 @@
 
 	let { config }: { config: QuizConfig } = $props();
 
-	let question: QuizQuestion = $state($state.snapshot(config.generate()));
+	// svelte-ignore state_referenced_locally — config is stable for the component's lifetime
+	let question: QuizQuestion = $state(config.generate());
 	let input = $state('');
 	let result: QuizCheckResult | null = $state(null);
 	let hintIndex = $state(0);
