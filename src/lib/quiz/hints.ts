@@ -1,8 +1,20 @@
 /**
- * Build progressive hint strings for a word.
+ * Build an ordered array of progressive hint strings that gradually reveal
+ * the answer one letter at a time. Each hint is a space-separated string
+ * where unrevealed letters are shown as underscores (e.g. `"J _ _ _ _ _ i"`).
  *
- * Progression: length → first letter → first sound (if different) → last letter → random interior
- * Each hint is a spaced string like "J _ _ _ _ _ i"
+ * Revelation order:
+ * 1. All blanks (shows word length only)
+ * 2. First letter
+ * 3. First sound — only if `firstSound` is a multi-character digraph/trigraph
+ *    (e.g. "Ch", "Ng"), revealing the additional characters beyond the first letter
+ * 4. Last letter
+ * 5. Remaining interior letters in random order, one per hint
+ *
+ * @param answer - The full answer string to generate hints for.
+ * @param firstSound - Optional multi-character opening sound (e.g. "Ch" for
+ *   "Chair"). Ignored if it's a single character since step 2 already covers it.
+ * @returns Array of hint strings from least to most revealed.
  */
 export function buildHints(answer: string, firstSound?: string): string[] {
   const letters = [...answer];

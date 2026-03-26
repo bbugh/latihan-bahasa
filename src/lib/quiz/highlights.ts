@@ -1,4 +1,12 @@
-/** Map wrong word indices to character ranges for input highlighting. */
+/**
+ * Convert word-level error indices into character-level `[start, end)` ranges
+ * for highlighting in the input field. Walks the input string splitting on
+ * spaces and maps each wrong word index to its character boundaries.
+ *
+ * @param input - The user's raw input string (may contain multiple spaces).
+ * @param wrongIndices - Zero-based indices of words that are wrong.
+ * @returns Character ranges suitable for {@link QuizCheckResult.wrongSpans}.
+ */
 export function wordErrorHighlightRanges(input: string, wrongIndices: number[]): [number, number][] {
   if (wrongIndices.length === 0) return [];
   const wrongSet = new Set(wrongIndices);
@@ -18,7 +26,14 @@ export function wordErrorHighlightRanges(input: string, wrongIndices: number[]):
   return ranges;
 }
 
-/** Map wrong digit positions to character ranges for input highlighting. */
+/**
+ * Convert wrong digit positions into character-level `[start, end)` ranges
+ * for highlighting in the input field. Each digit is one character wide.
+ *
+ * @param wrongDigits - Objects with a `position` indicating the zero-based
+ *   character index of each wrong digit.
+ * @returns Character ranges suitable for {@link QuizCheckResult.wrongSpans}.
+ */
 export function digitErrorHighlightRanges(wrongDigits: { position: number }[]): [number, number][] {
   return wrongDigits.map(d => [d.position, d.position + 1]);
 }

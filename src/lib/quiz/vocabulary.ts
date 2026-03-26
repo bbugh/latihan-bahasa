@@ -3,19 +3,35 @@ import { editDistance } from './edit-distance';
 import { buildHints } from './hints';
 import { wordErrorHighlightRanges } from './highlights';
 
+/** A single vocabulary pair for translation quizzes. */
 export interface VocabItem {
   english: string;
   indonesian: string;
+  /**
+   * Multi-character opening sound for hint generation (e.g. "Ng" for "Ngomong").
+   * Only needed when the first sound is a digraph/trigraph that wouldn't be
+   * obvious from the first letter alone.
+   */
   firstSound?: string;
 }
 
 interface VocabQuizPairConfig {
+  /** Grouping label and slug prefix, e.g. "Months". */
   category: string;
   items: VocabItem[];
+  /** Label for the source language, e.g. "English". */
   fromLabel: string;
+  /** Label for the target language, e.g. "Indonesian". */
   toLabel: string;
 }
 
+/**
+ * Create two complementary {@link QuizDefinition}s from a vocabulary list —
+ * one translating from `fromLabel` to `toLabel`, and one in reverse. Metadata
+ * (slug, title, description, instruction) is auto-generated from the labels.
+ *
+ * @returns `[forward, reverse]` tuple of quiz definitions.
+ */
 export function makeVocabQuizPair(config: VocabQuizPairConfig): [QuizDefinition, QuizDefinition] {
   const { category, items, fromLabel, toLabel } = config;
   const categoryLower = category.toLowerCase();
@@ -62,6 +78,12 @@ export function makeVocabQuizPair(config: VocabQuizPairConfig): [QuizDefinition,
   return [forward, reverse];
 }
 
+/**
+ * Check a vocabulary answer with case-insensitive, whitespace-tolerant matching.
+ * Returns "Almost!" feedback when the answer is within one-third edit distance
+ * of the expected answer, without revealing the correct answer. Identifies
+ * which words in the input are wrong and returns highlight ranges for them.
+ */
 export function vocabCheck(expected: string, input: string): QuizCheckResult {
   const trimmed = input.trim();
 
@@ -98,6 +120,15 @@ export function vocabCheck(expected: string, input: string): QuizCheckResult {
   };
 }
 
+/**
+ * Pick a random item from the list, ensuring it differs from the previously
+ * shown item to avoid back-to-back repeats.
+ *
+ * @param items - The full list to choose from.
+ * @param previous - The previous quiz prompt, if any. Used to avoid repeats.
+ * @param getPrompt - Extracts the prompt string from an item for comparison
+ *   against `previous.prompt`.
+ */
 export function randomItem<T>(
   items: T[],
   previous: QuizPrompt | undefined,

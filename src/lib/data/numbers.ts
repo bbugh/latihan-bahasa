@@ -13,6 +13,12 @@ interface PracticeNumberOptions {
   zeroWeight?: number;
 }
 
+/**
+ * Generate a random non-negative integer for practice. Zeros in non-leading
+ * positions are weighted more heavily (controlled by `zeroWeight`) so learners
+ * encounter numbers like 100, 1001, 5030 more often — these are harder because
+ * zero digits are silent in Indonesian.
+ */
 export function randomPracticeNumber(options: PracticeNumberOptions = {}): number {
   const maxDigits = options.maxDigits ?? 4;
   const zeroWeight = options.zeroWeight ?? 4;
@@ -39,6 +45,14 @@ export function randomPracticeNumber(options: PracticeNumberOptions = {}): numbe
 
 // -- Conversion --
 
+/**
+ * Convert a non-negative integer to its Indonesian word form.
+ * Uses canonical "se-" prefixes: seratus (not satu ratus), seribu, sebelas, sepuluh.
+ * Processes in groups of three digits, appending scale words (ribu, juta, miliar, etc.).
+ *
+ * @example numberToIndonesian(234) // "dua ratus tiga puluh empat"
+ * @example numberToIndonesian(1000) // "seribu"
+ */
 export function numberToIndonesian(x: number): string {
   if (!x) return 'nol';
 
@@ -69,6 +83,14 @@ export function numberToIndonesian(x: number): string {
   return parts.join(' ');
 }
 
+/**
+ * Parse Indonesian number words into a numeric value. Normalizes "se-" prefixes
+ * (e.g. "seratus" → "satu ratus") before parsing. Rejects unrecognized words
+ * by returning `null`, which allows the answer checker to distinguish typos from
+ * wrong-but-valid answers.
+ *
+ * @returns The parsed number, or `null` if the text contains non-number words.
+ */
 export function indonesianToNumber(text: string): number | null {
   const normalized = text.trim().toLowerCase()
     .replace(/\bse(?=puluh|belas|ratus|ribu)/g, 'satu ');
@@ -133,6 +155,13 @@ interface CheckResult {
   wrongIndices: number[];
 }
 
+/**
+ * Check an Indonesian word answer against the expected number. First validates
+ * that all words are recognized Indonesian number words, then parses and
+ * compares. If correct but using non-canonical forms (e.g. "satu ratus" instead
+ * of "seratus"), marks correct with a warning. For wrong answers, identifies
+ * which specific words are wrong by index without revealing the correct answer.
+ */
 export function checkAnswer(expected: number, input: string): CheckResult {
   const trimmed = input.trim().toLowerCase();
   if (!trimmed) return { correct: false, errors: ['No answer given'], warnings: [], wrongIndices: [] };
@@ -198,6 +227,15 @@ interface NumberCheckResult {
   wrongDigits: WrongDigit[];
 }
 
+/**
+ * Map each digit of a number to the Indonesian word it comes from, so error
+ * messages can tell the learner which word they got wrong. Zero digits (which
+ * have no corresponding word) get an empty string. Teen digits (10-19) share
+ * the same word across both digit positions.
+ *
+ * @example digitWords(4679) // ['empat', 'enam', 'tujuh', 'sembilan']
+ * @example digitWords(7804) // ['tujuh', 'delapan', '', 'empat']
+ */
 function digitWords(n: number): string[] {
   if (n === 0) return ['nol'];
 
@@ -234,6 +272,12 @@ function digitWords(n: number): string[] {
   return result;
 }
 
+/**
+ * Check a numeric digit answer against an Indonesian text prompt. Strips
+ * commas and periods (thousand separators), then compares digit-by-digit.
+ * For each wrong digit, reports which Indonesian word it corresponds to
+ * so the learner knows which part of the prompt they misread.
+ */
 export function checkNumberAnswer(indonesianText: string, input: string): NumberCheckResult {
   const empty: WrongDigit[] = [];
   const trimmed = input.trim().replace(/[,\.]/g, '');
@@ -274,6 +318,7 @@ export function checkNumberAnswer(indonesianText: string, input: string): Number
 
 // -- Quiz definitions --
 
+/** Quiz: see a formatted number, type the Indonesian words. */
 export const numbersToWords: QuizDefinition = {
   slug: 'numbers-to-words',
   title: 'Numbers \u2192 Words',
@@ -306,6 +351,7 @@ export const numbersToWords: QuizDefinition = {
   },
 };
 
+/** Quiz: see Indonesian number words, type the numeric digits. */
 export const wordsToNumbers: QuizDefinition = {
   slug: 'words-to-numbers',
   title: 'Words \u2192 Numbers',

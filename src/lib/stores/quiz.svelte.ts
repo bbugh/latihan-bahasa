@@ -1,5 +1,11 @@
 import type { QuizDefinition, QuizCheckResult, QuizPrompt } from '../quiz/definition';
 
+/**
+ * Create a reactive quiz session from a {@link QuizDefinition}. Manages the
+ * current prompt, user input, check results, and hint progression using
+ * Svelte 5 runes. The returned object exposes getters for the view to bind
+ * to and methods (`submit`, `next`, `showHint`) for user actions.
+ */
 export function createQuizState(definition: QuizDefinition) {
   let prompt: QuizPrompt = $state(definition.generate());
   let hints: string[] = $state(definition.buildHints?.(prompt.answer) ?? []);
