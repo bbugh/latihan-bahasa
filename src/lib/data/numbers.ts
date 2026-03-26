@@ -1,7 +1,14 @@
+import type { QuizCheckResult, QuizDefinition, QuizPrompt } from '../quiz/definition';
+import { wordErrorHighlightRanges, digitErrorHighlightRanges } from '../quiz/highlights';
+
+// -- Constants --
+
 const ONES = ['', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan'];
 const SCALES = ['', 'ribu', 'juta', 'miliar', 'triliun', 'kuadriliun'];
 
-export interface PracticeNumberOptions {
+// -- Number generation --
+
+interface PracticeNumberOptions {
   maxDigits?: number;
   zeroWeight?: number;
 }
@@ -10,7 +17,6 @@ export function randomPracticeNumber(options: PracticeNumberOptions = {}): numbe
   const maxDigits = options.maxDigits ?? 4;
   const zeroWeight = options.zeroWeight ?? 4;
 
-  // Pick how many digits (1 to maxDigits)
   const digitCounts = Array.from({ length: maxDigits }, (_, i) => i + 1);
   const numDigits = digitCounts[Math.floor(Math.random() * digitCounts.length)];
 
@@ -18,8 +24,6 @@ export function randomPracticeNumber(options: PracticeNumberOptions = {}): numbe
     return Math.floor(Math.random() * 10);
   }
 
-  // Build digit by digit. First digit is 1-9, rest are 0-9 with zero weighted.
-  // zeroWeight is a multiplier: 1 = uniform, 3 = zero is 3x more likely than other digits
   const zeroProbability = zeroWeight / (zeroWeight + 9);
   const digits: number[] = [Math.floor(Math.random() * 9) + 1];
   for (let i = 1; i < numDigits; i++) {
@@ -32,6 +36,8 @@ export function randomPracticeNumber(options: PracticeNumberOptions = {}): numbe
 
   return Number(digits.join(''));
 }
+
+// -- Conversion --
 
 export function numberToIndonesian(x: number): string {
   if (!x) return 'nol';
@@ -104,7 +110,7 @@ export function indonesianToNumber(text: string): number | null {
   return total + group + current;
 }
 
-// -- Answer checking with feedback --
+// -- Answer checking --
 
 const ALL_WORDS = new Set([
   'nol', ...ONES.filter(Boolean),
@@ -120,7 +126,7 @@ const SE_FORMS: Record<string, string> = {
   'satu ribu': 'seribu',
 };
 
-export interface CheckResult {
+interface CheckResult {
   correct: boolean;
   errors: string[];
   warnings: string[];
@@ -136,7 +142,6 @@ export function checkAnswer(expected: number, input: string): CheckResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Check for unrecognized words
   const wrongIndices: number[] = [];
   for (let i = 0; i < words.length; i++) {
     if (ALL_WORDS.has(words[i])) continue;
@@ -144,12 +149,10 @@ export function checkAnswer(expected: number, input: string): CheckResult {
     errors.push(`"${words[i]}" is not a number word`);
   }
 
-  // If all words are valid, check if the answer is correct
   if (errors.length === 0) {
     const parsed = indonesianToNumber(trimmed);
 
     if (parsed === expected) {
-      // Correct, but check for non-canonical "satu X" forms
       for (const [nonCanonical, canonical] of Object.entries(SE_FORMS)) {
         if (trimmed.includes(nonCanonical)) {
           warnings.push(`Correct, but use "${canonical}" instead of "${nonCanonical}"`);
@@ -159,13 +162,12 @@ export function checkAnswer(expected: number, input: string): CheckResult {
     }
   }
 
-  // Wrong answer — also check which valid words are in wrong positions
   const expectedWords = expectedText.split(' ');
   const inputWords = trimmed.split(/\s+/);
   const maxLen = Math.max(expectedWords.length, inputWords.length);
 
   for (let i = 0; i < maxLen; i++) {
-    if (wrongIndices.includes(i)) continue; // already marked as misspelled
+    if (wrongIndices.includes(i)) continue;
     if (i >= inputWords.length) {
       errors.push('Missing words at the end');
       break;
@@ -185,21 +187,17 @@ export function checkAnswer(expected: number, input: string): CheckResult {
   return { correct: false, errors, warnings, wrongIndices };
 }
 
-export interface WrongDigit {
+interface WrongDigit {
   position: number;
   word: string;
 }
 
-export interface NumberCheckResult {
+interface NumberCheckResult {
   correct: boolean;
   errors: string[];
   wrongDigits: WrongDigit[];
 }
 
-// Maps each digit of a number to the Indonesian word it comes from.
-// For digits that are zero (no corresponding word), returns an empty string.
-// e.g. 4679 → ['empat', 'enam', 'tujuh', 'sembilan']
-// e.g. 7804 → ['tujuh', 'delapan', '', 'empat']
 function digitWords(n: number): string[] {
   if (n === 0) return ['nol'];
 
@@ -211,24 +209,21 @@ function digitWords(n: number): string[] {
     if (d === 0) {
       result.push('');
     } else if (d === 1) {
-      // Check context for "se-" forms
       const posFromRight = str.length - 1 - i;
       if (posFromRight === 3) result.push('seribu');
       else if (posFromRight === 2) result.push('seratus');
       else if (posFromRight === 1) {
-        // teens: the tens and ones digit both come from the teen word
         const ones = Number(str[i + 1]);
         const word = ones === 0 ? 'sepuluh' : ones === 1 ? 'sebelas' : ONES[ones] + ' belas';
         result.push(word);
         result.push(word);
-        i++; // skip the ones digit, already handled
+        i++;
       } else {
         result.push(ONES[d]);
       }
     } else {
       const posFromRight = str.length - 1 - i;
       if (posFromRight === 1) {
-        // tens place: this digit + "puluh", and handle the ones digit
         result.push(ONES[d] + ' puluh');
       } else {
         result.push(ONES[d]);
@@ -261,7 +256,6 @@ export function checkNumberAnswer(indonesianText: string, input: string): Number
     return { correct: false, errors: [`Expected a ${expectedStr.length}-digit number`], wrongDigits: empty };
   }
 
-  // Compare digit by digit, mapping each digit back to its Indonesian word
   const dw = digitWords(expected);
   const wrongDigits: WrongDigit[] = [];
 
@@ -278,3 +272,68 @@ export function checkNumberAnswer(indonesianText: string, input: string): Number
   return { correct: false, errors, wrongDigits };
 }
 
+// -- Quiz definitions --
+
+export const numbersToWords: QuizDefinition = {
+  slug: 'numbers-to-words',
+  title: 'Numbers \u2192 Words',
+  description: 'See a number, type the Indonesian',
+  category: 'Numbers',
+  instruction: 'Type the Indonesian words for this number',
+  promptStyle: 'number',
+  inputMode: 'text',
+  placeholder: 'Type Indonesian here...',
+  generate(previous?: QuizPrompt): QuizPrompt {
+    let number: number;
+    do {
+      number = randomPracticeNumber();
+    } while (previous && String(number) === previous.prompt.replace(/,/g, ''));
+
+    return {
+      prompt: number.toLocaleString(),
+      answer: numberToIndonesian(number),
+    };
+  },
+  check(expected: string, input: string): QuizCheckResult {
+    const number = indonesianToNumber(expected)!;
+    const result = checkAnswer(number, input);
+    return {
+      correct: result.correct,
+      errors: result.errors,
+      warnings: result.warnings,
+      wrongSpans: wordErrorHighlightRanges(input.trim().toLowerCase(), result.wrongIndices),
+    };
+  },
+};
+
+export const wordsToNumbers: QuizDefinition = {
+  slug: 'words-to-numbers',
+  title: 'Words \u2192 Numbers',
+  description: 'See Indonesian words, type the number',
+  category: 'Numbers',
+  instruction: 'Type the number for these Indonesian words',
+  promptStyle: 'text',
+  inputMode: 'numeric',
+  placeholder: 'Type the number...',
+  generate(previous?: QuizPrompt): QuizPrompt {
+    let number: number;
+    do {
+      number = randomPracticeNumber();
+    } while (previous && numberToIndonesian(number) === previous.prompt);
+
+    return {
+      prompt: numberToIndonesian(number),
+      answer: String(number),
+    };
+  },
+  check(expected: string, input: string): QuizCheckResult {
+    const indonesianText = numberToIndonesian(Number(expected));
+    const result = checkNumberAnswer(indonesianText, input);
+    return {
+      correct: result.correct,
+      errors: result.errors,
+      warnings: [],
+      wrongSpans: digitErrorHighlightRanges(result.wrongDigits),
+    };
+  },
+};

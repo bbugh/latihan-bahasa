@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { numberToIndonesian, indonesianToNumber, checkAnswer, checkNumberAnswer, randomPracticeNumber } from './numbers';
+import {
+  numberToIndonesian,
+  indonesianToNumber,
+  checkAnswer,
+  checkNumberAnswer,
+  randomPracticeNumber,
+  numbersToWords,
+  wordsToNumbers,
+} from './numbers';
 
 describe('numberToIndonesian', () => {
   const cases: [number, string][] = [
@@ -191,10 +199,7 @@ describe('indonesianToNumber rejects learner mistakes', () => {
     ['ribu empat', 'only ribu then digit — missing structure'],
   ])('handles wrong order: "%s" (%s)', (input) => {
     const result = indonesianToNumber(input);
-    // These shouldn't crash — they can return a number or null,
-    // but they must not throw
     expect(() => indonesianToNumber(input)).not.toThrow();
-    // And if they do return a number, it won't be what the learner meant
     if (result !== null) {
       expect(typeof result).toBe('number');
     }
@@ -385,7 +390,6 @@ describe('checkAnswer', () => {
   });
 
   it('wrongIndices points to the wrong word position', () => {
-    // 21 = "dua puluh satu", input has "dua" at position 2 instead of "satu"
     const result = checkAnswer(21, 'dua puluh dua');
     expect(result.wrongIndices).toEqual([2]);
   });
@@ -396,27 +400,21 @@ describe('checkAnswer', () => {
   });
 
   it('wrongIndices marks only the wrong word in a longer answer', () => {
-    // 3490 = "tiga ribu empat ratus sembilan puluh"
-    // input has "lima" at position 2 instead of "empat"
     const result = checkAnswer(3490, 'tiga ribu lima ratus sembilan puluh');
     expect(result.wrongIndices).toEqual([2]);
   });
 
   it('wrongIndices marks extra words', () => {
-    // 20 = "dua puluh", input has extra "satu" at position 2
     const result = checkAnswer(20, 'dua puluh satu');
     expect(result.wrongIndices).toEqual([2]);
   });
 
   it('wrongIndices marks multiple wrong words', () => {
-    // 21 = "dua puluh satu"
     const result = checkAnswer(21, 'tiga puluh dua');
     expect(result.wrongIndices).toEqual([0, 2]);
   });
 
   it('wrongIndices marks misspelled AND wrong-position words together', () => {
-    // 6279 = "enam ribu dua ratus tujuh puluh sembilan"
-    // "lima" is wrong (position 0), "belas" is wrong (position 3), "semblian" is misspelled (position 6)
     const result = checkAnswer(6279, 'lima ribu dua belas tujuh puluh semblian');
     expect(result.wrongIndices).toContain(0); // lima instead of enam
     expect(result.wrongIndices).toContain(3); // belas instead of ratus
@@ -473,8 +471,6 @@ describe('checkNumberAnswer', () => {
   });
 
   it('identifies wrong hundreds digit and its Indonesian word', () => {
-    // 4679 = "empat ribu enam ratus tujuh puluh sembilan"
-    // user types 4579 — the "5" is wrong, should be "enam"
     const result = checkNumberAnswer('empat ribu enam ratus tujuh puluh sembilan', '4579');
     expect(result.wrongDigits).toEqual([
       { position: 1, word: 'enam' },
@@ -482,7 +478,6 @@ describe('checkNumberAnswer', () => {
   });
 
   it('identifies wrong ones digit', () => {
-    // 21 = "dua puluh satu", user types 23
     const result = checkNumberAnswer('dua puluh satu', '23');
     expect(result.wrongDigits).toEqual([
       { position: 1, word: 'satu' },
@@ -490,7 +485,6 @@ describe('checkNumberAnswer', () => {
   });
 
   it('identifies wrong digit when number has interior zeros', () => {
-    // 7804 = "tujuh ribu delapan ratus empat", user types 7805
     const result = checkNumberAnswer('tujuh ribu delapan ratus empat', '7805');
     expect(result.wrongDigits).toEqual([
       { position: 3, word: 'empat' },
@@ -498,28 +492,23 @@ describe('checkNumberAnswer', () => {
   });
 
   it('shows useful error for wrong digit at a zero position', () => {
-    // 5603 = "lima ribu enam ratus tiga", user types 5417
     const result = checkNumberAnswer('lima ribu enam ratus tiga', '5417');
     expect(result.correct).toBe(false);
-    // No error message should contain empty quotes
     expect(result.errors.every(e => !e.includes('""'))).toBe(true);
   });
 
   it('identifies multiple wrong digits', () => {
-    // 234 = "dua ratus tiga puluh empat", user types 567
     const result = checkNumberAnswer('dua ratus tiga puluh empat', '567');
     expect(result.wrongDigits.length).toBe(3);
   });
 
   it('handles different digit counts — too few digits', () => {
-    // 234 = "dua ratus tiga puluh empat", user types 34
     const result = checkNumberAnswer('dua ratus tiga puluh empat', '34');
     expect(result.correct).toBe(false);
     expect(result.errors.length).toBeGreaterThan(0);
   });
 
   it('handles different digit counts — too many digits', () => {
-    // 21 = "dua puluh satu", user types 210
     const result = checkNumberAnswer('dua puluh satu', '210');
     expect(result.correct).toBe(false);
     expect(result.errors.length).toBeGreaterThan(0);
@@ -546,8 +535,6 @@ describe('randomPracticeNumber', () => {
     const results = Array.from({ length: 2000 }, () => randomPracticeNumber());
     const multiDigit = results.filter(n => n >= 10);
     const withZero = multiDigit.filter(n => String(n).includes('0'));
-    // Uniform would give ~19% of multi-digit numbers containing a zero
-    // With 3x weighting, should be noticeably higher
     expect(withZero.length / multiDigit.length).toBeGreaterThan(0.25);
   });
 
@@ -560,14 +547,11 @@ describe('randomPracticeNumber', () => {
   });
 
   it('zeroWeight 1 gives zero equal probability to other digits', () => {
-    // With weight 1, zero has 1/10 chance per digit — same as uniform
     const results = Array.from({ length: 2000 }, () =>
       randomPracticeNumber({ maxDigits: 3, zeroWeight: 1 })
     );
     const multiDigit = results.filter(n => n >= 10);
     const withZero = multiDigit.filter(n => String(n).includes('0'));
-    // Uniform: ~10% chance per digit has a zero, so roughly 19% of 2-3 digit numbers
-    // Should be noticeably less than the default (3x) weighting
     expect(withZero.length).toBeLessThan(multiDigit.length * 0.4);
   });
 });
@@ -577,5 +561,76 @@ describe('roundtrip', () => {
 
   it.each(values)('%d survives roundtrip', (n) => {
     expect(indonesianToNumber(numberToIndonesian(n))).toBe(n);
+  });
+});
+
+describe('numbersToWords definition', () => {
+  it('has correct metadata', () => {
+    expect(numbersToWords.slug).toBe('numbers-to-words');
+    expect(numbersToWords.category).toBe('Numbers');
+    expect(numbersToWords.promptStyle).toBe('number');
+    expect(numbersToWords.inputMode).toBe('text');
+  });
+
+  it('generates a formatted number prompt with indonesian answer', () => {
+    const q = numbersToWords.generate();
+    expect(q.prompt).toMatch(/^[\d,]+$/);
+    expect(q.answer).toMatch(/^[a-z ]+$/);
+  });
+
+  it('check accepts correct answer', () => {
+    const q = numbersToWords.generate();
+    const result = numbersToWords.check(q.answer, q.answer);
+    expect(result.correct).toBe(true);
+  });
+
+  it('check rejects wrong answer with wrongSpans', () => {
+    const q = numbersToWords.generate();
+    const result = numbersToWords.check(q.answer, 'butts');
+    expect(result.correct).toBe(false);
+    expect(result.wrongSpans.length).toBeGreaterThan(0);
+  });
+
+  it('does not define buildHints', () => {
+    expect(numbersToWords.buildHints).toBeUndefined();
+  });
+
+  it('avoids repeating previous prompt', () => {
+    const first = numbersToWords.generate();
+    for (let i = 0; i < 30; i++) {
+      const next = numbersToWords.generate(first);
+      expect(next.prompt).not.toBe(first.prompt);
+    }
+  });
+});
+
+describe('wordsToNumbers definition', () => {
+  it('has correct metadata', () => {
+    expect(wordsToNumbers.slug).toBe('words-to-numbers');
+    expect(wordsToNumbers.category).toBe('Numbers');
+    expect(wordsToNumbers.promptStyle).toBe('text');
+    expect(wordsToNumbers.inputMode).toBe('numeric');
+  });
+
+  it('generates an indonesian prompt with number answer', () => {
+    const q = wordsToNumbers.generate();
+    expect(q.prompt).toMatch(/^[a-z ]+$/);
+    expect(q.answer).toMatch(/^\d+$/);
+  });
+
+  it('check accepts correct answer', () => {
+    const q = wordsToNumbers.generate();
+    const result = wordsToNumbers.check(q.answer, q.answer);
+    expect(result.correct).toBe(true);
+  });
+
+  it('check rejects wrong answer', () => {
+    const q = wordsToNumbers.generate();
+    const result = wordsToNumbers.check(q.answer, '99999');
+    expect(result.correct).toBe(false);
+  });
+
+  it('does not define buildHints', () => {
+    expect(wordsToNumbers.buildHints).toBeUndefined();
   });
 });

@@ -43,7 +43,6 @@ describe('HighlightInput', () => {
       wrongSpans: [],
     });
     const overlay = container.querySelector('[aria-hidden="true"]');
-    // Overlay should show transparent text (no colored spans)
     const redSpans = overlay!.querySelectorAll('.text-red-400');
     expect(redSpans.length).toBe(0);
   });

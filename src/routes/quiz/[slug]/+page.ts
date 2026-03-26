@@ -1,4 +1,4 @@
-import { QUIZ_REGISTRY } from '$lib/quizzes';
+import { QUIZ_REGISTRY } from '$lib/data/registry';
 
 export function load({ params }: { params: { slug: string } }) {
   return { slug: params.slug };

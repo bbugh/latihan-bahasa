@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { base } from '$app/paths';
-	import { QUIZ_REGISTRY } from '$lib/quizzes';
-	import type { QuizConfig } from '$lib/quiz';
+	import { QUIZ_REGISTRY } from '$lib/data/registry';
+	import type { QuizDefinition } from '$lib/quiz/definition';
 
-	const categories: [string, QuizConfig[]][] = [];
+	const categories: [string, QuizDefinition[]][] = [];
 	for (const quiz of QUIZ_REGISTRY) {
 		const existing = categories.find(([c]) => c === quiz.category);
 		if (existing) existing[1].push(quiz);
