@@ -140,6 +140,71 @@ describe('months-to-indonesian quiz', () => {
   });
 });
 
+describe('vocabulary wrongSpans', () => {
+  const config = QUIZ_BY_SLUG.get('months-to-indonesian')!;
+
+  function generateFor(prompt: string): QuizQuestion {
+    let q: QuizQuestion;
+    // Generate until we get the target prompt
+    for (let i = 0; i < 200; i++) {
+      q = config.generate();
+      if (q.prompt === prompt) return q;
+    }
+    throw new Error(`Could not generate question for "${prompt}"`);
+  }
+
+  it('returns no wrongSpans for correct answer', () => {
+    const q = generateFor('January');
+    const result = q.check('Januari');
+    expect(result.correct).toBe(true);
+    expect(result.wrongSpans).toEqual([]);
+  });
+
+  it('returns no wrongSpans for empty input', () => {
+    const q = generateFor('January');
+    const result = q.check('');
+    expect(result.correct).toBe(false);
+    expect(result.wrongSpans).toEqual([]);
+  });
+
+  it('returns no wrongSpans for whitespace-only input', () => {
+    const q = generateFor('January');
+    const result = q.check('   ');
+    expect(result.correct).toBe(false);
+    expect(result.wrongSpans).toEqual([]);
+  });
+
+  it('highlights entire single word when wrong', () => {
+    const q = generateFor('January');
+    const result = q.check('Februari');
+    expect(result.correct).toBe(false);
+    expect(result.wrongSpans).toEqual([[0, 'Februari'.length]]);
+  });
+
+  it('highlights extra words beyond expected', () => {
+    const q = generateFor('January');
+    const result = q.check('Januari extra');
+    expect(result.correct).toBe(false);
+    // "extra" starts at index 8
+    expect(result.wrongSpans).toEqual([[8, 13]]);
+  });
+
+  it('highlights all words when completely wrong', () => {
+    const q = generateFor('January');
+    const result = q.check('abc def');
+    expect(result.correct).toBe(false);
+    expect(result.wrongSpans).toEqual([[0, 3], [4, 7]]);
+  });
+
+  it('handles leading and trailing spaces in input', () => {
+    const q = generateFor('January');
+    // checkVocabularyAnswer trims, but wrongSpans uses the trimmed value
+    const result = q.check('  Februari  ');
+    expect(result.correct).toBe(false);
+    expect(result.wrongSpans).toEqual([[0, 'Februari'.length]]);
+  });
+});
+
 describe('months-to-english quiz', () => {
   const config = QUIZ_BY_SLUG.get('months-to-english')!;
 
