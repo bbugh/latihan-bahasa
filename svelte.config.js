@@ -8,6 +8,9 @@ const config = {
 			base: '/latihan-bahasa'
 		}
 	},
+	compilerOptions: {
+		warningFilter: (warning) => warning.code !== 'a11y_autofocus'
+	},
 	vitePlugin: {
 		dynamicCompileOptions: ({ filename }) =>
 			filename.includes('node_modules') ? undefined : { runes: true }
