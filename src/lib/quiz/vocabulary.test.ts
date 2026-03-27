@@ -67,6 +67,19 @@ describe('vocabCheck', () => {
     expect(result.correct).toBe(false);
     expect(result.wrongSpans).toEqual([[0, 3], [4, 7]]);
   });
+
+  it('aligns highlight ranges with raw input when there are leading spaces', () => {
+    const result = vocabCheck('Januari', '  Februari');
+    expect(result.correct).toBe(false);
+    // Word starts at index 2, not 0
+    expect(result.wrongSpans).toEqual([[2, 10]]);
+  });
+
+  it('aligns highlight ranges with raw input when there are trailing spaces', () => {
+    const result = vocabCheck('Januari', 'Februari  ');
+    expect(result.correct).toBe(false);
+    expect(result.wrongSpans).toEqual([[0, 8]]);
+  });
 });
 
 describe('randomItem', () => {

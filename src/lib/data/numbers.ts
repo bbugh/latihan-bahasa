@@ -346,7 +346,7 @@ export const numbersToWords: QuizDefinition = {
       correct: result.correct,
       errors: result.errors,
       warnings: result.warnings,
-      wrongSpans: wordErrorHighlightRanges(input.trim().toLowerCase(), result.wrongIndices),
+      wrongSpans: wordErrorHighlightRanges(input, result.wrongIndices),
     };
   },
 };

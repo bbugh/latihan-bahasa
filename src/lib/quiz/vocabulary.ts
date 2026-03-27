@@ -115,7 +115,7 @@ export function vocabCheck(expected: string, input: string): QuizCheckResult {
     correct: false,
     errors,
     warnings: [],
-    wrongSpans: wordErrorHighlightRanges(trimmed, wrongIndices),
+    wrongSpans: wordErrorHighlightRanges(input, wrongIndices),
   };
 }
 
