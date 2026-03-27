@@ -1,4 +1,5 @@
 import type { QuizDefinition } from '../quiz/definition';
+import { daysToIndonesian, daysToEnglish } from './days';
 import { monthsToIndonesian, monthsToEnglish } from './months';
 import { numbersToWords, wordsToNumbers } from './numbers';
 
@@ -8,6 +9,8 @@ export const QUIZ_REGISTRY: QuizDefinition[] = [
   wordsToNumbers,
   monthsToIndonesian,
   monthsToEnglish,
+  daysToIndonesian,
+  daysToEnglish,
 ];
 
 /** Lookup map for finding a quiz definition by its URL slug. */

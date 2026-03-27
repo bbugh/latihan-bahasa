@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { QUIZ_REGISTRY, QUIZ_BY_SLUG } from './registry';
 
 describe('QUIZ_REGISTRY', () => {
-  it('contains all four quizzes', () => {
-    expect(QUIZ_REGISTRY.length).toBe(4);
+  it('contains all quizzes', () => {
+    expect(QUIZ_REGISTRY.length).toBe(6);
   });
 
   it('every quiz has required fields', () => {
