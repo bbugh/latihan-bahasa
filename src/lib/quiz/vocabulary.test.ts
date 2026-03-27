@@ -156,6 +156,7 @@ describe('makeVocabQuizPair', () => {
   });
 
   it('forward buildHints returns hints', () => {
+    if (!forward.buildHints) throw new Error('buildHints should be defined for vocab quizzes');
     const hints = forward.buildHints('Januari');
     expect(hints.length).toBeGreaterThan(0);
     expect(hints[0]).toBe('_ _ _ _ _ _ _');

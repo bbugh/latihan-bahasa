@@ -41,6 +41,7 @@
 			<span class="text-transparent">{value}</span>
 		{/if}
 	</div>
+	<!-- svelte-ignore a11y_autofocus -->
 	<input
 		bind:this={inputEl}
 		type="text"

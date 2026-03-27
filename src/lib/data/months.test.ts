@@ -26,6 +26,7 @@ describe('monthsToIndonesian', () => {
   });
 
   it('builds hints for an answer', () => {
+    if (!monthsToIndonesian.buildHints) throw new Error('buildHints should be defined for vocab quizzes');
     const hints = monthsToIndonesian.buildHints('Januari');
     expect(hints[0]).toBe('_ _ _ _ _ _ _');
     expect(hints[1]).toBe('J _ _ _ _ _ _');
