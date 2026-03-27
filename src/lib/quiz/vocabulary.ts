@@ -52,7 +52,8 @@ export function makeVocabQuizPair(config: VocabQuizPairConfig): [QuizDefinition,
     },
     check: vocabCheck,
     buildHints(answer: string): string[] {
-      return buildHints(answer);
+      const item = items.find(i => i.indonesian === answer);
+      return buildHints(answer, item?.firstSound);
     },
   };
 
@@ -70,9 +71,7 @@ export function makeVocabQuizPair(config: VocabQuizPairConfig): [QuizDefinition,
       return { prompt: item.indonesian, answer: item.english };
     },
     check: vocabCheck,
-    buildHints(answer: string): string[] {
-      return buildHints(answer);
-    },
+    buildHints,
   };
 
   return [forward, reverse];
@@ -134,12 +133,11 @@ export function randomItem<T>(
   previous: QuizPrompt | undefined,
   getPrompt: (item: T) => string,
 ): T {
-  if (items.length <= 1) return items[0];
+  if (!previous) {
+    return items[Math.floor(Math.random() * items.length)];
+  }
 
-  let item: T;
-  do {
-    item = items[Math.floor(Math.random() * items.length)];
-  } while (previous && getPrompt(item) === previous.prompt);
-
-  return item;
+  const candidates = items.filter(i => getPrompt(i) !== previous.prompt);
+  const pool = candidates.length > 0 ? candidates : items;
+  return pool[Math.floor(Math.random() * pool.length)];
 }

@@ -335,7 +335,7 @@ export const numbersToWords: QuizDefinition = {
     } while (previous && String(number) === previous.prompt.replace(/,/g, ''));
 
     return {
-      prompt: number.toLocaleString(),
+      prompt: number.toLocaleString('en-US'),
       answer: numberToIndonesian(number),
     };
   },
