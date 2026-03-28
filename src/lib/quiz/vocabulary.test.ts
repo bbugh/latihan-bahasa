@@ -201,7 +201,7 @@ describe('defineVocabSet', () => {
 
   it('generates a quiz for a language pair', () => {
     const quiz = set.quiz('en', 'id');
-    expect(quiz.slug).toBe('colors-to-id');
+    expect(quiz.slug).toBe('colors-to-indonesian');
     expect(quiz.category).toBe('Colors');
   });
 

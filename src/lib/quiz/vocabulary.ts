@@ -195,6 +195,12 @@ export interface VocabSet {
   quiz: (from: string, to: string) => QuizDefinition;
 }
 
+const displayNames = new Intl.DisplayNames(['en'], { type: 'language' });
+
+function langName(code: string): string {
+  return displayNames.of(code) ?? code;
+}
+
 /**
  * Extract the base language from a locale code (e.g. 'en-US' → 'en').
  */
@@ -273,11 +279,11 @@ export function defineVocabSet(config: VocabSetConfig): VocabSet {
     );
 
     return {
-      slug: `${categoryLower}-to-${to}`,
-      title: `${category} \u2192 ${to.toUpperCase()}`,
-      description: `See ${from.toUpperCase()}, type the ${to.toUpperCase()}`,
+      slug: `${categoryLower}-to-${langName(to).toLowerCase()}`,
+      title: `${category} \u2192 ${langName(to)}`,
+      description: `See ${langName(from)}, type the ${langName(to)}`,
       category,
-      instruction: `Type the ${to.toUpperCase()} translation`,
+      instruction: `Type the ${langName(to)} translation`,
       promptStyle: 'text',
       inputMode: 'text',
       placeholder: 'Type your answer...',
