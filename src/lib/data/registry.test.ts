@@ -3,7 +3,7 @@ import { QUIZ_REGISTRY, QUIZ_BY_SLUG } from './registry';
 
 describe('QUIZ_REGISTRY', () => {
   it('contains all quizzes', () => {
-    expect(QUIZ_REGISTRY.length).toBe(6);
+    expect(QUIZ_REGISTRY.length).toBe(8);
   });
 
   it('every quiz has required fields', () => {
