@@ -1,61 +1,63 @@
 import { describe, expect, it } from 'vitest';
-import { monthsToIndonesian, monthsToEnglish } from './months';
+import { MONTHS } from './months';
 
-describe('monthsToIndonesian', () => {
+const enToId = MONTHS.quiz('en', 'id');
+const idToEn = MONTHS.quiz('id', 'en');
+
+describe('months en→id', () => {
   it('has correct slug', () => {
-    expect(monthsToIndonesian.slug).toBe('months-to-indonesian');
+    expect(enToId.slug).toBe('months-to-indonesian');
   });
 
-  it('generates english prompt with indonesian answer', () => {
-    const q = monthsToIndonesian.generate();
+  it('generates prompt and answer', () => {
+    const q = enToId.generate();
     expect(q.prompt).toMatch(/^[A-Z]/);
     expect(q.answer).toMatch(/^[A-Z]/);
   });
 
   it('checks correct answer', () => {
-    const q = monthsToIndonesian.generate();
-    const result = monthsToIndonesian.check(q.answer, q.answer);
+    const q = enToId.generate();
+    const result = enToId.check(q.answer, q.answer);
     expect(result.correct).toBe(true);
   });
 
   it('checks wrong answer', () => {
-    const q = monthsToIndonesian.generate();
-    const result = monthsToIndonesian.check(q.answer, 'xyzxyz');
+    const q = enToId.generate();
+    const result = enToId.check(q.answer, 'xyzxyz');
     expect(result.correct).toBe(false);
     expect(result.wrongSpans.length).toBeGreaterThan(0);
   });
 
   it('builds hints for an answer', () => {
-    if (!monthsToIndonesian.buildHints) throw new Error('buildHints should be defined for vocab quizzes');
-    const hints = monthsToIndonesian.buildHints('Januari');
+    if (!enToId.buildHints) throw new Error('buildHints should be defined for vocab quizzes');
+    const hints = enToId.buildHints('Januari');
     expect(hints[0]).toBe('_ _ _ _ _ _ _');
     expect(hints[1]).toBe('J _ _ _ _ _ _');
   });
 
   it('avoids repeating previous prompt', () => {
-    const first = monthsToIndonesian.generate();
+    const first = enToId.generate();
     for (let i = 0; i < 30; i++) {
-      const next = monthsToIndonesian.generate(first);
+      const next = enToId.generate(first);
       expect(next.prompt).not.toBe(first.prompt);
     }
   });
 });
 
-describe('monthsToEnglish', () => {
+describe('months id→en', () => {
   it('has correct slug', () => {
-    expect(monthsToEnglish.slug).toBe('months-to-english');
+    expect(idToEn.slug).toBe('months-to-english');
   });
 
-  it('generates indonesian prompt with english answer', () => {
-    const q = monthsToEnglish.generate();
-    // Both directions have capitalized names
+  it('generates prompt and answer', () => {
+    const q = idToEn.generate();
     expect(q.prompt).toMatch(/^[A-Z]/);
     expect(q.answer).toMatch(/^[A-Z]/);
   });
 
   it('checks correct answer', () => {
-    const q = monthsToEnglish.generate();
-    const result = monthsToEnglish.check(q.answer, q.answer);
+    const q = idToEn.generate();
+    const result = idToEn.check(q.answer, q.answer);
     expect(result.correct).toBe(true);
   });
 });
