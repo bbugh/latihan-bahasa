@@ -76,4 +76,28 @@ describe('buildHints', () => {
     const hints = buildHints('Chair', 'ch');
     expect(hints[2]).toBe('C h _ _ _');
   });
+
+  it('always shows spaces in multi-word answers', () => {
+    const hints = buildHints('Merah Muda');
+    // Every hint should have a visible space between the words, never "_" for it
+    for (const hint of hints) {
+      // Split by double-space (the separator between display chars)
+      // The space character in the answer should render as a space, not _
+      expect(hint).not.toMatch(/_ _ _ _ _ _ _ _ _ _/);
+    }
+    // First hint shows word lengths with space visible
+    expect(hints[0]).toBe('_ _ _ _ _   _ _ _ _');
+  });
+
+  it('reveals letters independently per word in multi-word answers', () => {
+    const hints = buildHints('Merah Muda');
+    // Second hint reveals first letter of first word
+    expect(hints[1]).toBe('M _ _ _ _   _ _ _ _');
+  });
+
+  it('last hint reveals full multi-word answer', () => {
+    const hints = buildHints('Merah Muda');
+    const last = hints[hints.length - 1];
+    expect(last).toBe('M e r a h   M u d a');
+  });
 });
