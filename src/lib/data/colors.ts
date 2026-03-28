@@ -1,24 +1,20 @@
-import { makeVocabQuizPair } from '../quiz/vocabulary';
+import { defineVocabSet } from '../quiz/vocabulary';
 
-const COLORS = [
-  { english: 'Red', indonesian: 'Merah' },
-  { english: 'Blue', indonesian: 'Biru' },
-  { english: 'Yellow', indonesian: 'Kuning' },
-  { english: 'Green', indonesian: 'Hijau' },
-  { english: 'White', indonesian: 'Putih' },
-  { english: 'Black', indonesian: 'Hitam' },
-  { english: 'Orange', indonesian: 'Oranye' },
-  { english: 'Purple', indonesian: 'Ungu' },
-  { english: 'Brown', indonesian: 'Cokelat' },
-  { english: 'Pink', indonesian: 'Merah Muda' },
-  { english: 'Grey', indonesian: 'Abu-abu', altEnglish: ['Gray'] },
-  { english: 'Gold', indonesian: 'Emas' },
-  { english: 'Silver', indonesian: 'Perak' },
-];
-
-export const [colorsToIndonesian, colorsToEnglish] = makeVocabQuizPair({
+export const COLORS = defineVocabSet({
   category: 'Colors',
-  items: COLORS,
-  fromLabel: 'English',
-  toLabel: 'Indonesian',
+  items: [
+    { en: ['Red'], id: ['Merah'] },
+    { en: ['Blue'], id: ['Biru'] },
+    { en: ['Yellow'], id: ['Kuning'] },
+    { en: ['Green'], id: ['Hijau'] },
+    { en: ['White'], id: ['Putih'] },
+    { en: ['Black'], id: ['Hitam'] },
+    { en: ['Orange'], id: ['Oranye'] },
+    { en: ['Purple'], id: ['Ungu'] },
+    { en: ['Brown'], id: ['Cokelat', 'Coklat'] },
+    { en: ['Pink'], id: ['Merah Muda'] },
+    { 'en-US': ['Gray'], 'en-GB': ['Grey'], id: ['Abu-abu'] },
+    { en: ['Gold'], id: ['Emas'] },
+    { en: ['Silver'], id: ['Perak'] },
+  ],
 });

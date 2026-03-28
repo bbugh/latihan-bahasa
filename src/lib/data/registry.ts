@@ -1,5 +1,5 @@
 import type { QuizDefinition } from '../quiz/definition';
-import { colorsToIndonesian, colorsToEnglish } from './colors';
+import { COLORS } from './colors';
 import { daysToIndonesian, daysToEnglish } from './days';
 import { monthsToIndonesian, monthsToEnglish } from './months';
 import { numbersToWords, wordsToNumbers } from './numbers';
@@ -12,8 +12,8 @@ export const QUIZ_REGISTRY: QuizDefinition[] = [
   monthsToEnglish,
   daysToIndonesian,
   daysToEnglish,
-  colorsToIndonesian,
-  colorsToEnglish,
+  COLORS.quiz('en', 'id'),
+  COLORS.quiz('id', 'en'),
 ];
 
 /** Lookup map for finding a quiz definition by its URL slug. */

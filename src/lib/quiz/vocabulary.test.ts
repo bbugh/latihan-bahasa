@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { vocabCheck, randomItem, makeVocabQuizPair, type VocabItem } from './vocabulary';
+import { vocabCheck, randomItem, makeVocabQuizPair, defineVocabSet, type VocabItem } from './vocabulary';
 
 const TEST_ITEMS: VocabItem[] = [
   { english: 'January', indonesian: 'Januari' },
@@ -168,5 +168,88 @@ describe('makeVocabQuizPair', () => {
       const next = forward.generate(first);
       expect(next.prompt).not.toBe(first.prompt);
     }
+  });
+});
+
+describe('defineVocabSet', () => {
+  const set = defineVocabSet({
+    category: 'Colors',
+    items: [
+      { en: ['Red'], id: ['Merah'] },
+      { en: ['Brown'], id: ['Cokelat', 'Coklat'] },
+      { 'en-US': ['Gray'], 'en-GB': ['Grey'], id: ['Abu-abu'] },
+    ],
+  });
+
+  it('returns category', () => {
+    expect(set.category).toBe('Colors');
+  });
+
+  it('returns items', () => {
+    expect(set.items.length).toBe(3);
+  });
+
+  it('reports available languages', () => {
+    expect(set.languages).toContain('en');
+    expect(set.languages).toContain('id');
+  });
+
+  it('includes base language from locale-specific keys', () => {
+    // en-US and en-GB should both contribute "en" to languages
+    expect(set.languages).toContain('en');
+  });
+
+  it('generates a quiz for a language pair', () => {
+    const quiz = set.quiz('en', 'id');
+    expect(quiz.slug).toBe('colors-en-to-id');
+    expect(quiz.category).toBe('Colors');
+  });
+
+  it('generated quiz check accepts correct answer', () => {
+    const quiz = set.quiz('en', 'id');
+    const q = quiz.generate();
+    const result = quiz.check(q.answer, q.answer);
+    expect(result.correct).toBe(true);
+  });
+
+  it('generated quiz check accepts alternate spellings', () => {
+    const quiz = set.quiz('en', 'id');
+    // "Coklat" is alternate for "Cokelat"
+    const result = quiz.check('Cokelat', 'Coklat');
+    expect(result.correct).toBe(true);
+  });
+
+  it('generated quiz accepts any locale spelling for answer', () => {
+    const quiz = set.quiz('en', 'id');
+    // When prompting "Abu-abu", both "Gray" and "Grey" should be wrong
+    // (they're English, not Indonesian) — but when going id→en:
+    const reverseQuiz = set.quiz('id', 'en');
+    const result = reverseQuiz.check('Gray', 'Grey');
+    expect(result.correct).toBe(true);
+  });
+
+  it('generated quiz displays first spelling as prompt', () => {
+    const quiz = set.quiz('en', 'id');
+    // Generate until we get Brown
+    for (let i = 0; i < 100; i++) {
+      const q = quiz.generate();
+      if (q.answer === 'Cokelat') {
+        // Prompt should be first en spelling
+        expect(q.prompt).toBe('Brown');
+        return;
+      }
+    }
+    throw new Error('Never generated Brown');
+  });
+
+  it('generated quiz builds hints', () => {
+    const quiz = set.quiz('en', 'id');
+    if (!quiz.buildHints) throw new Error('buildHints should be defined');
+    const hints = quiz.buildHints('Merah');
+    expect(hints[0]).toBe('_ _ _ _ _');
+  });
+
+  it('throws for unsupported language pair', () => {
+    expect(() => set.quiz('en', 'es')).toThrow();
   });
 });
