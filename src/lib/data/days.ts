@@ -1,18 +1,14 @@
-import { makeVocabQuizPair } from '../quiz/vocabulary';
+import { defineVocabSet } from '../quiz/vocabulary';
 
-const DAYS = [
-  { english: 'Monday', indonesian: 'Senin' },
-  { english: 'Tuesday', indonesian: 'Selasa' },
-  { english: 'Wednesday', indonesian: 'Rabu' },
-  { english: 'Thursday', indonesian: 'Kamis' },
-  { english: 'Friday', indonesian: 'Jumat' },
-  { english: 'Saturday', indonesian: 'Sabtu' },
-  { english: 'Sunday', indonesian: 'Minggu' },
-];
-
-export const [daysToIndonesian, daysToEnglish] = makeVocabQuizPair({
+export const DAYS = defineVocabSet({
   category: 'Days',
-  items: DAYS,
-  fromLabel: 'English',
-  toLabel: 'Indonesian',
+  items: [
+    { en: ['Monday'], id: ['Senin'] },
+    { en: ['Tuesday'], id: ['Selasa'] },
+    { en: ['Wednesday'], id: ['Rabu'] },
+    { en: ['Thursday'], id: ['Kamis'] },
+    { en: ['Friday'], id: ['Jumat'] },
+    { en: ['Saturday'], id: ['Sabtu'] },
+    { en: ['Sunday'], id: ['Minggu'] },
+  ],
 });

@@ -22,9 +22,19 @@ export function buildHints(answer: string, firstSound?: string): string[] {
   const revealed = new Array<boolean>(len).fill(false);
   const hints: string[] = [];
 
-  const snap = () => letters.map((ch, i) => revealed[i] ? ch : '_').join(' ');
+  // Spaces are always visible — mark them as revealed immediately
+  for (let i = 0; i < len; i++) {
+    if (letters[i] === ' ') revealed[i] = true;
+  }
 
-  // 1. Length only (all blanks)
+  // Render hint: revealed chars show as-is, unrevealed as '_'.
+  // Spaces render as double-space to visually separate words.
+  const snap = () => letters.map((ch, i) => {
+    if (ch === ' ') return ' ';
+    return revealed[i] ? ch : '_';
+  }).join(' ');
+
+  // 1. Length only (all blanks, spaces visible)
   hints.push(snap());
 
   // 2. First letter
@@ -34,7 +44,6 @@ export function buildHints(answer: string, firstSound?: string): string[] {
   // 3. First sound (if it's a digraph/trigraph beyond the first letter)
   if (firstSound && firstSound.length > 1) {
     const soundLen = firstSound.length;
-    // Reveal characters covered by the first sound
     for (let i = 1; i < soundLen && i < len; i++) {
       revealed[i] = true;
     }

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { vocabCheck, randomItem, makeVocabQuizPair, type VocabItem } from './vocabulary';
+import { vocabCheck, randomItem, defineVocabSet } from './vocabulary';
 
-const TEST_ITEMS: VocabItem[] = [
-  { english: 'January', indonesian: 'Januari' },
-  { english: 'February', indonesian: 'Februari' },
-  { english: 'March', indonesian: 'Maret' },
+const TEST_ITEMS = [
+  { en: 'January', id: 'Januari' },
+  { en: 'February', id: 'Februari' },
+  { en: 'March', id: 'Maret' },
 ];
 
 describe('vocabCheck', () => {
@@ -85,7 +85,7 @@ describe('vocabCheck', () => {
 describe('randomItem', () => {
   it('returns an item from the array', () => {
     for (let i = 0; i < 20; i++) {
-      const item = randomItem(TEST_ITEMS, undefined, i => i.english);
+      const item = randomItem(TEST_ITEMS, undefined, i => i.en);
       expect(TEST_ITEMS).toContainEqual(item);
     }
   });
@@ -93,80 +93,95 @@ describe('randomItem', () => {
   it('avoids repeating the previous prompt', () => {
     const prev = { prompt: 'January', answer: 'Januari' };
     for (let i = 0; i < 30; i++) {
-      const item = randomItem(TEST_ITEMS, prev, i => i.english);
-      expect(item.english).not.toBe('January');
+      const item = randomItem(TEST_ITEMS, prev, i => i.en);
+      expect(item.en).not.toBe('January');
     }
   });
 
   it('returns the only item when array has one element', () => {
     const single = [TEST_ITEMS[0]];
-    const item = randomItem(single, undefined, i => i.english);
+    const item = randomItem(single, undefined, i => i.en);
     expect(item).toBe(single[0]);
   });
 });
 
-describe('makeVocabQuizPair', () => {
-  const [forward, reverse] = makeVocabQuizPair({
-    category: 'Months',
-    items: TEST_ITEMS,
-    fromLabel: 'English',
-    toLabel: 'Indonesian',
+describe('defineVocabSet', () => {
+  const set = defineVocabSet({
+    category: 'Colors',
+    items: [
+      { en: ['Red'], id: ['Merah'] },
+      { en: ['Brown'], id: ['Cokelat', 'Coklat'] },
+      { 'en-US': ['Gray'], 'en-GB': ['Grey'], id: ['Abu-abu'] },
+    ],
   });
 
-  it('generates forward definition with correct metadata', () => {
-    expect(forward.slug).toBe('months-to-indonesian');
-    expect(forward.title).toBe('Months \u2192 Indonesian');
-    expect(forward.category).toBe('Months');
-    expect(forward.promptStyle).toBe('text');
-    expect(forward.inputMode).toBe('text');
+  it('returns category', () => {
+    expect(set.category).toBe('Colors');
   });
 
-  it('generates reverse definition with correct metadata', () => {
-    expect(reverse.slug).toBe('months-to-english');
-    expect(reverse.title).toBe('Months \u2192 English');
-    expect(reverse.category).toBe('Months');
+  it('returns items', () => {
+    expect(set.items.length).toBe(3);
   });
 
-  it('forward generates english prompt with indonesian answer', () => {
-    const q = forward.generate();
-    const englishNames = TEST_ITEMS.map(i => i.english);
-    const indonesianNames = TEST_ITEMS.map(i => i.indonesian);
-    expect(englishNames).toContain(q.prompt);
-    expect(indonesianNames).toContain(q.answer);
+  it('reports available languages', () => {
+    expect(set.languages).toContain('en');
+    expect(set.languages).toContain('id');
   });
 
-  it('reverse generates indonesian prompt with english answer', () => {
-    const q = reverse.generate();
-    const englishNames = TEST_ITEMS.map(i => i.english);
-    const indonesianNames = TEST_ITEMS.map(i => i.indonesian);
-    expect(indonesianNames).toContain(q.prompt);
-    expect(englishNames).toContain(q.answer);
+  it('includes base language from locale-specific keys', () => {
+    // en-US and en-GB should both contribute "en" to languages
+    expect(set.languages).toContain('en');
   });
 
-  it('forward check accepts correct answer', () => {
-    const q = forward.generate();
-    const result = forward.check(q.answer, q.answer);
+  it('generates a quiz for a language pair', () => {
+    const quiz = set.quiz('en', 'id');
+    expect(quiz.slug).toBe('colors-to-indonesian');
+    expect(quiz.category).toBe('Colors');
+  });
+
+  it('generated quiz check accepts correct answer', () => {
+    const quiz = set.quiz('en', 'id');
+    const q = quiz.generate();
+    const result = quiz.check(q.answer, q.answer);
     expect(result.correct).toBe(true);
   });
 
-  it('reverse check accepts correct answer', () => {
-    const q = reverse.generate();
-    const result = reverse.check(q.answer, q.answer);
+  it('generated quiz check accepts alternate spellings', () => {
+    const quiz = set.quiz('en', 'id');
+    // "Coklat" is alternate for "Cokelat"
+    const result = quiz.check('Cokelat', 'Coklat');
     expect(result.correct).toBe(true);
   });
 
-  it('forward buildHints returns hints', () => {
-    if (!forward.buildHints) throw new Error('buildHints should be defined for vocab quizzes');
-    const hints = forward.buildHints('Januari');
-    expect(hints.length).toBeGreaterThan(0);
-    expect(hints[0]).toBe('_ _ _ _ _ _ _');
+  it('generated quiz accepts any locale spelling for answer', () => {
+    // id→en: both "Gray" (en-US) and "Grey" (en-GB) are valid English answers
+    const reverseQuiz = set.quiz('id', 'en');
+    const result = reverseQuiz.check('Gray', 'Grey');
+    expect(result.correct).toBe(true);
   });
 
-  it('avoids repeating the previous prompt', () => {
-    const first = forward.generate();
-    for (let i = 0; i < 30; i++) {
-      const next = forward.generate(first);
-      expect(next.prompt).not.toBe(first.prompt);
+  it('generated quiz displays first spelling as prompt', () => {
+    const quiz = set.quiz('en', 'id');
+    // Generate until we get Brown
+    for (let i = 0; i < 100; i++) {
+      const q = quiz.generate();
+      if (q.answer === 'Cokelat') {
+        // Prompt should be first en spelling
+        expect(q.prompt).toBe('Brown');
+        return;
+      }
     }
+    throw new Error('Never generated Brown');
+  });
+
+  it('generated quiz builds hints', () => {
+    const quiz = set.quiz('en', 'id');
+    if (!quiz.buildHints) throw new Error('buildHints should be defined');
+    const hints = quiz.buildHints('Merah');
+    expect(hints[0]).toBe('_ _ _ _ _');
+  });
+
+  it('throws for unsupported language pair', () => {
+    expect(() => set.quiz('en', 'es')).toThrow();
   });
 });

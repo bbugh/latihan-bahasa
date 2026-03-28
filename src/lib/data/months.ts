@@ -1,23 +1,19 @@
-import { makeVocabQuizPair } from '../quiz/vocabulary';
+import { defineVocabSet } from '../quiz/vocabulary';
 
-const MONTHS = [
-  { english: 'January', indonesian: 'Januari' },
-  { english: 'February', indonesian: 'Februari' },
-  { english: 'March', indonesian: 'Maret' },
-  { english: 'April', indonesian: 'April' },
-  { english: 'May', indonesian: 'Mei' },
-  { english: 'June', indonesian: 'Juni' },
-  { english: 'July', indonesian: 'Juli' },
-  { english: 'August', indonesian: 'Agustus' },
-  { english: 'September', indonesian: 'September' },
-  { english: 'October', indonesian: 'Oktober' },
-  { english: 'November', indonesian: 'November' },
-  { english: 'December', indonesian: 'Desember' },
-];
-
-export const [monthsToIndonesian, monthsToEnglish] = makeVocabQuizPair({
+export const MONTHS = defineVocabSet({
   category: 'Months',
-  items: MONTHS,
-  fromLabel: 'English',
-  toLabel: 'Indonesian',
+  items: [
+    { en: ['January'], id: ['Januari'] },
+    { en: ['February'], id: ['Februari'] },
+    { en: ['March'], id: ['Maret'] },
+    { en: ['April'], id: ['April'] },
+    { en: ['May'], id: ['Mei'] },
+    { en: ['June'], id: ['Juni'] },
+    { en: ['July'], id: ['Juli'] },
+    { en: ['August'], id: ['Agustus'] },
+    { en: ['September'], id: ['September'] },
+    { en: ['October'], id: ['Oktober'] },
+    { en: ['November'], id: ['November'] },
+    { en: ['December'], id: ['Desember'] },
+  ],
 });
