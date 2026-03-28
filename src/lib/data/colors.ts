@@ -11,7 +11,7 @@ const COLORS = [
   { english: 'Purple', indonesian: 'Ungu' },
   { english: 'Brown', indonesian: 'Cokelat' },
   { english: 'Pink', indonesian: 'Merah Muda' },
-  { english: 'Grey', indonesian: 'Abu-abu' },
+  { english: 'Grey', indonesian: 'Abu-abu', altEnglish: ['Gray'] },
   { english: 'Gold', indonesian: 'Emas' },
   { english: 'Silver', indonesian: 'Perak' },
 ];

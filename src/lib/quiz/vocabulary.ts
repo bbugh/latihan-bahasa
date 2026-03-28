@@ -7,6 +7,10 @@ import { wordErrorHighlightRanges } from './highlights';
 export interface VocabItem {
   english: string;
   indonesian: string;
+  /** Alternate accepted spellings for the English answer (e.g. "Gray" for "Grey"). */
+  altEnglish?: string[];
+  /** Alternate accepted spellings for the Indonesian answer. */
+  altIndonesian?: string[];
   /**
    * Multi-character opening sound for hint generation (e.g. "Ng" for "Ngomong").
    * Only needed when the first sound is a digraph/trigraph that wouldn't be
@@ -50,7 +54,10 @@ export function makeVocabQuizPair(config: VocabQuizPairConfig): [QuizDefinition,
       const item = randomItem(items, previous, i => i.english);
       return { prompt: item.english, answer: item.indonesian };
     },
-    check: vocabCheck,
+    check(expected: string, input: string): QuizCheckResult {
+      const item = items.find(i => i.indonesian === expected);
+      return vocabCheckWithAlternates(expected, input, item?.altIndonesian);
+    },
     buildHints(answer: string): string[] {
       const item = items.find(i => i.indonesian === answer);
       return buildHints(answer, item?.firstSound);
@@ -70,11 +77,31 @@ export function makeVocabQuizPair(config: VocabQuizPairConfig): [QuizDefinition,
       const item = randomItem(items, previous, i => i.indonesian);
       return { prompt: item.indonesian, answer: item.english };
     },
-    check: vocabCheck,
+    check(expected: string, input: string): QuizCheckResult {
+      const item = items.find(i => i.english === expected);
+      return vocabCheckWithAlternates(expected, input, item?.altEnglish);
+    },
     buildHints,
   };
 
   return [forward, reverse];
+}
+
+/**
+ * Check against the primary answer and any alternate spellings. If the input
+ * matches any alternate exactly, it's correct. Otherwise falls through to
+ * the standard check against the primary answer.
+ */
+function vocabCheckWithAlternates(expected: string, input: string, alternates?: string[]): QuizCheckResult {
+  if (alternates) {
+    const trimmed = input.trim();
+    for (const alt of alternates) {
+      if (trimmed.toLowerCase() === alt.toLowerCase()) {
+        return { correct: true, errors: [], warnings: [], wrongSpans: [] };
+      }
+    }
+  }
+  return vocabCheck(expected, input);
 }
 
 /**

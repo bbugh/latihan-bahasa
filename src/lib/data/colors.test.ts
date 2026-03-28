@@ -73,4 +73,14 @@ describe('colorsToEnglish', () => {
     const result = colorsToEnglish.check(q.answer, q.answer);
     expect(result.correct).toBe(true);
   });
+
+  it('accepts "Gray" as alternate spelling for "Grey"', () => {
+    const result = colorsToEnglish.check('Grey', 'Gray');
+    expect(result.correct).toBe(true);
+  });
+
+  it('accepts "gray" case-insensitively', () => {
+    const result = colorsToEnglish.check('Grey', 'gray');
+    expect(result.correct).toBe(true);
+  });
 });
