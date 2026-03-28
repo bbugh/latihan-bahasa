@@ -8,9 +8,12 @@ const config = {
 			base: '/latihan-bahasa'
 		}
 	},
+	compilerOptions: {
+		experimental: { async: true }
+	},
 	vitePlugin: {
 		dynamicCompileOptions: ({ filename }) =>
-			filename.includes('node_modules') ? undefined : { runes: true }
+			filename.includes('node_modules') ? undefined : { runes: true, experimental: { async: true } }
 	}
 };
 

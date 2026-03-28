@@ -1,4 +1,18 @@
+import { hydratable } from 'svelte';
 import type { QuizDefinition, QuizCheckResult, QuizPrompt } from '../quiz/definition';
+
+/**
+ * Generate a value that stays stable across SSR and hydration. Falls back
+ * to calling `fn()` directly in vitest, which doesn't compile .svelte.ts
+ * files with the experimental async flag that hydratable requires.
+ */
+function stableValue<T>(key: string, fn: () => T): T {
+  try {
+    return hydratable(key, fn);
+  } catch {
+    return fn();
+  }
+}
 
 /**
  * Create a reactive quiz session from a {@link QuizDefinition}. Manages the
@@ -7,7 +21,7 @@ import type { QuizDefinition, QuizCheckResult, QuizPrompt } from '../quiz/defini
  * to and methods (`submit`, `next`, `showHint`) for user actions.
  */
 export function createQuizState(definition: QuizDefinition) {
-  let prompt: QuizPrompt = $state(definition.generate());
+  let prompt: QuizPrompt = $state(stableValue(definition.slug, () => definition.generate()));
   let hints: string[] = $state(definition.buildHints?.(prompt.answer) ?? []);
   let input: string = $state('');
   let result: QuizCheckResult | null = $state(null);
