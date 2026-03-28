@@ -201,7 +201,7 @@ describe('defineVocabSet', () => {
 
   it('generates a quiz for a language pair', () => {
     const quiz = set.quiz('en', 'id');
-    expect(quiz.slug).toBe('colors-en-to-id');
+    expect(quiz.slug).toBe('colors-to-id');
     expect(quiz.category).toBe('Colors');
   });
 
@@ -220,9 +220,7 @@ describe('defineVocabSet', () => {
   });
 
   it('generated quiz accepts any locale spelling for answer', () => {
-    const quiz = set.quiz('en', 'id');
-    // When prompting "Abu-abu", both "Gray" and "Grey" should be wrong
-    // (they're English, not Indonesian) — but when going id→en:
+    // id→en: both "Gray" (en-US) and "Grey" (en-GB) are valid English answers
     const reverseQuiz = set.quiz('id', 'en');
     const result = reverseQuiz.check('Gray', 'Grey');
     expect(result.correct).toBe(true);

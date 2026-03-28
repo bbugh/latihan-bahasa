@@ -89,19 +89,36 @@ export function makeVocabQuizPair(config: VocabQuizPairConfig): [QuizDefinition,
 
 /**
  * Check against the primary answer and any additional accepted spellings.
- * If the input matches any accepted spelling exactly, it's correct.
- * Otherwise falls through to the standard check against the primary answer.
+ * Tries exact match against all accepted spellings first, then runs the
+ * fuzzy "Almost!" check against the closest accepted spelling.
  */
 function vocabCheckWithAlternates(expected: string, input: string, accepted?: string[]): QuizCheckResult {
-  if (accepted) {
-    const trimmed = input.trim();
-    for (const spelling of accepted) {
-      if (trimmed.toLowerCase() === spelling.toLowerCase()) {
-        return { correct: true, errors: [], warnings: [], wrongSpans: [] };
-      }
+  if (!accepted || accepted.length === 0) {
+    return vocabCheck(expected, input);
+  }
+
+  const trimmed = input.trim();
+  if (!trimmed) {
+    return { correct: false, errors: ['No answer given'], warnings: [], wrongSpans: [] };
+  }
+
+  // Exact match against any accepted spelling
+  for (const spelling of accepted) {
+    if (trimmed.toLowerCase() === spelling.toLowerCase()) {
+      return { correct: true, errors: [], warnings: [], wrongSpans: [] };
     }
   }
-  return vocabCheck(expected, input);
+
+  // Fuzzy check against the closest accepted spelling
+  let bestResult = vocabCheck(expected, input);
+  for (const spelling of accepted) {
+    const result = vocabCheck(spelling, input);
+    // Prefer "Almost!" over "Incorrect"
+    if (!bestResult.errors.some(e => /almost/i.test(e)) && result.errors.some(e => /almost/i.test(e))) {
+      bestResult = result;
+    }
+  }
+  return bestResult;
 }
 
 /**
@@ -148,8 +165,18 @@ export function vocabCheck(expected: string, input: string): QuizCheckResult {
 
 // -- defineVocabSet: locale-aware vocabulary sets --
 
-/** A vocabulary item keyed by locale code. Each key maps to accepted spellings. */
-export type VocabSetItem = Record<string, string[]> & { firstSound?: string };
+/**
+ * A vocabulary item keyed by locale code. Each key (e.g. 'en', 'id', 'en-US')
+ * maps to an array of accepted spellings. The first spelling is used for display.
+ */
+export interface VocabSetItem {
+  [locale: string]: string[] | string | undefined;
+  /**
+   * Multi-character opening sound for hint generation (e.g. "Ng" for "Ngomong").
+   * Only needed when the first sound is a digraph/trigraph.
+   */
+  firstSound?: string;
+}
 
 interface VocabSetConfig {
   category: string;
@@ -161,7 +188,10 @@ export interface VocabSet {
   items: VocabSetItem[];
   /** Base languages available across all items (e.g. ['en', 'id']). */
   languages: string[];
-  /** Generate a QuizDefinition for a specific language pair. */
+  /**
+   * Generate a QuizDefinition for a specific language pair. Call once at
+   * module level (e.g. in registry.ts), not in render loops.
+   */
   quiz: (from: string, to: string) => QuizDefinition;
 }
 
@@ -198,7 +228,8 @@ function displaySpelling(item: VocabSetItem, lang: string): string | undefined {
   if (Array.isArray(item[lang]) && item[lang].length > 0) {
     return item[lang][0];
   }
-  // Fall back to any locale-specific key matching the base language
+  // Fall back to first locale-specific key matching the base language.
+  // Uses insertion order of the item's keys, so put the preferred locale first.
   for (const [key, value] of Object.entries(item)) {
     if (key === 'firstSound') continue;
     if (!Array.isArray(value)) continue;
@@ -242,8 +273,8 @@ export function defineVocabSet(config: VocabSetConfig): VocabSet {
     );
 
     return {
-      slug: `${categoryLower}-${from}-to-${to}`,
-      title: `${category} ${from.toUpperCase()} \u2192 ${to.toUpperCase()}`,
+      slug: `${categoryLower}-to-${to}`,
+      title: `${category} \u2192 ${to.toUpperCase()}`,
       description: `See ${from.toUpperCase()}, type the ${to.toUpperCase()}`,
       category,
       instruction: `Type the ${to.toUpperCase()} translation`,
@@ -264,7 +295,8 @@ export function defineVocabSet(config: VocabSetConfig): VocabSet {
       },
       buildHints(answer: string): string[] {
         const item = eligible.find(i => allSpellings(i, to).some(s => s === answer));
-        return buildHints(answer, item?.firstSound as string | undefined);
+        const firstSound = typeof item?.firstSound === 'string' ? item.firstSound : undefined;
+        return buildHints(answer, firstSound);
       },
     };
   }
