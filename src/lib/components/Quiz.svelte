@@ -82,7 +82,7 @@
 
 		<div class="text-center text-sm">
 			{#if quiz.currentHint}
-				<p class="text-amber-400 font-mono tracking-widest">{quiz.currentHint}</p>
+				<p class="text-amber-400 font-mono tracking-widest whitespace-pre">{quiz.currentHint}</p>
 			{/if}
 			{#if quiz.isCorrect}
 				<p class="text-emerald-400">Correct! Press Enter for next</p>
