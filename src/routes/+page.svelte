@@ -19,6 +19,15 @@
 		</div>
 
 		<div class="space-y-6">
+			<a
+				href="{base}/quiz/random"
+				class="block rounded-lg bg-stone-800 border border-stone-600 px-5 py-4
+					hover:bg-stone-700 transition-colors"
+			>
+				<p class="font-medium">Random</p>
+				<p class="text-stone-400 text-sm">Practice everything at once</p>
+			</a>
+
 			{#each categories as [category, quizzes]}
 				<div class="space-y-3">
 					<h2 class="text-sm font-medium tracking-widest uppercase text-stone-500">{category}</h2>

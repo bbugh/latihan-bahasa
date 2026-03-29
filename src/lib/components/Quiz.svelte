@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { base } from '$app/paths';
-	import type { QuizDefinition } from '../quiz/definition';
+	import type { QuizSession } from '../quiz/session';
 	import { createQuizState } from '../stores/quiz.svelte';
 	import HighlightInput from './HighlightInput.svelte';
 
-	let { definition }: { definition: QuizDefinition } = $props();
+	let { session }: { session: QuizSession } = $props();
 
-	// svelte-ignore state_referenced_locally — definition is stable for the component's lifetime
-	const quiz = createQuizState(definition);
+	// svelte-ignore state_referenced_locally — session is stable for the component's lifetime
+	const quiz = createQuizState(session);
 	let inputEl: HTMLInputElement | undefined = $state();
 
 	async function handleNext() {
@@ -31,11 +31,11 @@
 	<a href="{base}/" class="absolute top-6 left-6 text-stone-500 hover:text-stone-300 text-lg transition-colors">← Back</a>
 	<div class="w-full max-w-lg space-y-8 h-[400px]">
 		<div class="text-center space-y-2">
-			<p class="text-stone-400 text-sm">{definition.instruction}</p>
+			<p class="text-stone-400 text-sm">{quiz.instruction}</p>
 		</div>
 
 		<div class="text-center">
-			<p class="{quiz.promptStyle === 'number' ? 'text-7xl tabular-nums' : 'text-5xl'} font-bold tracking-tight">
+			<p class="text-5xl font-bold tracking-tight tabular-nums">
 				{quiz.prompt}
 			</p>
 		</div>

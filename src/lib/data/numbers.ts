@@ -325,7 +325,6 @@ export const numbersToWords: QuizDefinition = {
   description: 'See a number, type the Indonesian',
   category: 'Numbers',
   instruction: 'Type the Indonesian words for this number',
-  promptStyle: 'number',
   inputMode: 'text',
   placeholder: 'Type Indonesian here...',
   generate(previous?: QuizPrompt): QuizPrompt {
@@ -358,7 +357,6 @@ export const wordsToNumbers: QuizDefinition = {
   description: 'See Indonesian words, type the number',
   category: 'Numbers',
   instruction: 'Type the number for these Indonesian words',
-  promptStyle: 'text',
   inputMode: 'numeric',
   placeholder: 'Type the number...',
   generate(previous?: QuizPrompt): QuizPrompt {

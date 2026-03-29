@@ -34,8 +34,6 @@ export interface QuizDefinition {
   category: string;
   /** Instruction text shown above the prompt during the quiz. */
   instruction: string;
-  /** Controls prompt font styling — large tabular for numbers, standard for text. */
-  promptStyle: 'number' | 'text';
   /** Controls the virtual keyboard type on mobile. */
   inputMode: 'text' | 'numeric';
   placeholder: string;
