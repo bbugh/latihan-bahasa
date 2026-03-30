@@ -92,6 +92,21 @@ describe('singleDefinitionSession', () => {
     const q2 = session.generate(q1);
     expect(q1.context).toBe(q2.context);
   });
+
+  it('sets defSlug from definition', () => {
+    const session = singleDefinitionSession(makeDef({ slug: 'my-quiz' }));
+    const q = session.generate();
+    expect(q.defSlug).toBe('my-quiz');
+  });
+
+  it('fromHydrated reconstructs ActiveQuestion', () => {
+    const session = singleDefinitionSession(makeDef({ slug: 'my-quiz' }));
+    const q = session.fromHydrated({ prompt: { prompt: 'Hello', answer: 'world' }, defSlug: 'my-quiz' });
+    expect(q.prompt.prompt).toBe('Hello');
+    expect(q.prompt.answer).toBe('world');
+    expect(q.defSlug).toBe('my-quiz');
+    expect(q.check('world', 'world').correct).toBe(true);
+  });
 });
 
 describe('randomSession', () => {
@@ -159,5 +174,35 @@ describe('randomSession', () => {
     const q2 = session.generate(q1);
     expect(q1.prompt).toBeTruthy();
     expect(q2.prompt).toBeTruthy();
+  });
+
+  it('sets defSlug on generated questions', () => {
+    const session = randomSession([defA, defB]);
+    const q = session.generate();
+    expect([defA.slug, defB.slug]).toContain(q.defSlug);
+  });
+
+  it('fromHydrated reconstructs with correct definition', () => {
+    const session = randomSession([defA, defB]);
+    const q = session.fromHydrated({ prompt: { prompt: 'Hello', answer: 'world' }, defSlug: 'quiz-a' });
+    expect(q.prompt.prompt).toBe('Hello');
+    expect(q.defSlug).toBe('quiz-a');
+    expect(q.context.inputMode).toBe('numeric'); // defA's inputMode
+  });
+
+  it('fromHydrated falls back to first pool entry for unknown slug', () => {
+    const session = randomSession([defA, defB]);
+    const q = session.fromHydrated({ prompt: { prompt: 'Hello', answer: 'world' }, defSlug: 'nonexistent' });
+    expect(q.context.inputMode).toBe('numeric'); // defA is first in pool
+  });
+
+  it('uses defSlug for repeat avoidance instead of function identity', () => {
+    const session = randomSession([defA, defB]);
+    let prev = session.generate();
+    for (let i = 0; i < 30; i++) {
+      const next = session.generate(prev);
+      expect(next.defSlug).not.toBe(prev.defSlug);
+      prev = next;
+    }
   });
 });

@@ -16,9 +16,20 @@ export interface QuestionContext {
  */
 export interface ActiveQuestion {
   prompt: QuizPrompt;
+  /** Slug of the definition that generated this question, used for hydration. */
+  defSlug: string;
   context: QuestionContext;
   check: (expected: string, input: string) => QuizCheckResult;
   buildHints?: (answer: string) => string[];
+}
+
+/**
+ * Serializable subset of ActiveQuestion that hydratable() can persist
+ * across SSR and hydration.
+ */
+export interface HydratableQuestion {
+  prompt: QuizPrompt;
+  defSlug: string;
 }
 
 /**
@@ -30,6 +41,8 @@ export interface QuizSession {
   slug: string;
   title: string;
   generate(previous?: ActiveQuestion): ActiveQuestion;
+  /** Reconstruct an ActiveQuestion from hydrated data. */
+  fromHydrated(data: HydratableQuestion): ActiveQuestion;
 }
 
 /**
@@ -43,17 +56,18 @@ export function singleDefinitionSession(def: QuizDefinition): QuizSession {
     instruction: def.instruction,
   };
 
+  function buildActive(prompt: QuizPrompt): ActiveQuestion {
+    return { prompt, defSlug: def.slug, context, check: def.check, buildHints: def.buildHints };
+  }
+
   return {
     slug: def.slug,
     title: def.title,
     generate(previous?: ActiveQuestion): ActiveQuestion {
-      const prompt = def.generate(previous?.prompt);
-      return {
-        prompt,
-        context,
-        check: def.check,
-        buildHints: def.buildHints,
-      };
+      return buildActive(def.generate(previous?.prompt));
+    },
+    fromHydrated(data: HydratableQuestion): ActiveQuestion {
+      return buildActive(data.prompt);
     },
   };
 }
@@ -86,6 +100,22 @@ export function randomSession(
     throw new Error('Random session has no eligible definitions');
   }
 
+  const poolBySlug = new Map(pool.map(d => [d.slug, d]));
+
+  function buildActive(def: QuizDefinition, prompt: QuizPrompt): ActiveQuestion {
+    return {
+      prompt,
+      defSlug: def.slug,
+      context: {
+        inputMode: def.inputMode,
+        placeholder: def.placeholder,
+        instruction: def.instruction,
+      },
+      check: def.check,
+      buildHints: def.buildHints,
+    };
+  }
+
   return {
     slug,
     title,
@@ -93,26 +123,19 @@ export function randomSession(
       let def: QuizDefinition;
 
       if (previous && pool.length > 1) {
-        const candidates = pool.filter(d => d.check !== previous.check);
+        const candidates = pool.filter(d => d.slug !== previous.defSlug);
         const available = candidates.length > 0 ? candidates : pool;
         def = available[Math.floor(Math.random() * available.length)];
       } else {
         def = pool[Math.floor(Math.random() * pool.length)];
       }
 
-      const prevPrompt = previous?.check === def.check ? previous.prompt : undefined;
-      const prompt = def.generate(prevPrompt);
-
-      return {
-        prompt,
-        context: {
-          inputMode: def.inputMode,
-          placeholder: def.placeholder,
-          instruction: def.instruction,
-        },
-        check: def.check,
-        buildHints: def.buildHints,
-      };
+      const prevPrompt = previous?.defSlug === def.slug ? previous.prompt : undefined;
+      return buildActive(def, def.generate(prevPrompt));
+    },
+    fromHydrated(data: HydratableQuestion): ActiveQuestion {
+      const def = poolBySlug.get(data.defSlug) ?? pool[0];
+      return buildActive(def, data.prompt);
     },
   };
 }

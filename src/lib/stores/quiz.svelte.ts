@@ -1,5 +1,5 @@
 import { hydratable } from 'svelte';
-import type { QuizSession, ActiveQuestion } from '../quiz/session';
+import type { QuizSession, ActiveQuestion, HydratableQuestion } from '../quiz/session';
 import type { QuizCheckResult } from '../quiz/definition';
 
 /**
@@ -22,9 +22,11 @@ function stableValue<T>(key: string, fn: () => T): T {
  * update automatically when the session produces a new question.
  */
 export function createQuizState(session: QuizSession) {
-  let active: ActiveQuestion = $state(
-    stableValue(session.slug, () => session.generate())
-  );
+  const hydrated = stableValue(session.slug, (): HydratableQuestion => {
+    const q = session.generate();
+    return { prompt: q.prompt, defSlug: q.defSlug };
+  });
+  let active: ActiveQuestion = $state(session.fromHydrated(hydrated));
   let hints: string[] = $state(active.buildHints?.(active.prompt.answer) ?? []);
   let input: string = $state('');
   let result: QuizCheckResult | null = $state(null);
