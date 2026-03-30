@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createQuizState } from './quiz.svelte';
 import type { QuizDefinition, QuizCheckResult, QuizPrompt } from '../quiz/definition';
+import { singleDefinitionSession } from '../quiz/session';
 
 function makeDefinition(overrides: Partial<QuizDefinition> = {}): QuizDefinition {
   let callCount = 0;
@@ -10,7 +11,6 @@ function makeDefinition(overrides: Partial<QuizDefinition> = {}): QuizDefinition
     description: 'A test quiz',
     category: 'Test',
     instruction: 'Type the answer',
-    promptStyle: 'text',
     inputMode: 'text',
     placeholder: 'Type here...',
     generate(previous?: QuizPrompt): QuizPrompt {
@@ -55,25 +55,24 @@ function makeDefinitionNoHints(): QuizDefinition {
 
 describe('createQuizState', () => {
   it('initializes with a prompt from the definition', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     expect(state.prompt).toBe('Question 1');
     expect(state.answer).toBe('correct');
   });
 
   it('starts with empty input', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     expect(state.input).toBe('');
   });
 
   it('starts with no result', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     expect(state.result).toBeNull();
     expect(state.isCorrect).toBe(false);
   });
 
   it('exposes definition properties', () => {
-    const state = createQuizState(makeDefinition());
-    expect(state.promptStyle).toBe('text');
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     expect(state.inputMode).toBe('text');
     expect(state.placeholder).toBe('Type here...');
   });
@@ -81,14 +80,14 @@ describe('createQuizState', () => {
 
 describe('submit', () => {
   it('sets isCorrect true for correct answer', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.input = 'correct';
     state.submit();
     expect(state.isCorrect).toBe(true);
   });
 
   it('populates errors for wrong answer', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.input = 'wrong';
     state.submit();
     expect(state.isCorrect).toBe(false);
@@ -96,28 +95,28 @@ describe('submit', () => {
   });
 
   it('populates wrongSpans for wrong answer', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.input = 'wrong';
     state.submit();
     expect(state.wrongSpans).toEqual([[0, 5]]);
   });
 
   it('returns empty wrongSpans for correct answer', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.input = 'correct';
     state.submit();
     expect(state.wrongSpans).toEqual([]);
   });
 
   it('returns warnings for correct answer', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.input = 'correct';
     state.submit();
     expect(state.warnings).toEqual(['Nice!']);
   });
 
   it('returns empty warnings for wrong answer', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.input = 'wrong';
     state.submit();
     expect(state.warnings).toEqual([]);
@@ -126,19 +125,19 @@ describe('submit', () => {
 
 describe('borderStyle', () => {
   it('is default before submission', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     expect(state.borderStyle).toBe('default');
   });
 
   it('is correct after correct submission', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.input = 'correct';
     state.submit();
     expect(state.borderStyle).toBe('correct');
   });
 
   it('is error after wrong submission', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.input = 'wrong';
     state.submit();
     expect(state.borderStyle).toBe('error');
@@ -147,21 +146,21 @@ describe('borderStyle', () => {
 
 describe('next', () => {
   it('cycles to a new question', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     expect(state.prompt).toBe('Question 1');
     state.next();
     expect(state.prompt).toBe('Question 2');
   });
 
   it('resets input', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.input = 'something';
     state.next();
     expect(state.input).toBe('');
   });
 
   it('resets result', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.input = 'wrong';
     state.submit();
     expect(state.isCorrect).toBe(false);
@@ -171,7 +170,7 @@ describe('next', () => {
   });
 
   it('resets hint index', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.showHint();
     expect(state.currentHint).toBeTruthy();
     state.next();
@@ -181,18 +180,18 @@ describe('next', () => {
 
 describe('hints', () => {
   it('starts with no hint shown', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     expect(state.currentHint).toBeNull();
   });
 
   it('shows first hint after showHint', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.showHint();
     expect(state.currentHint).toBe('_ _ _ _ _ _ _');
   });
 
   it('progresses through hints', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.showHint();
     expect(state.currentHint).toBe('_ _ _ _ _ _ _');
     state.showHint();
@@ -202,7 +201,7 @@ describe('hints', () => {
   });
 
   it('stops at last hint', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.showHint();
     state.showHint();
     state.showHint();
@@ -212,37 +211,37 @@ describe('hints', () => {
   });
 
   it('hasHints is true when hints exist', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     expect(state.hasHints).toBe(true);
   });
 
   it('hasHints is false when no hints', () => {
-    const state = createQuizState(makeDefinitionNoHints());
+    const state = createQuizState(singleDefinitionSession(makeDefinitionNoHints()));
     expect(state.hasHints).toBe(false);
   });
 });
 
 describe('canSubmit', () => {
   it('is false with empty input', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     expect(state.canSubmit).toBe(false);
   });
 
   it('is true with non-empty input', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.input = 'something';
     expect(state.canSubmit).toBe(true);
   });
 
   it('is false after correct answer', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.input = 'correct';
     state.submit();
     expect(state.canSubmit).toBe(false);
   });
 
   it('is false with whitespace-only input', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.input = '   ';
     expect(state.canSubmit).toBe(false);
   });
@@ -250,17 +249,17 @@ describe('canSubmit', () => {
 
 describe('canHint', () => {
   it('is true when hints available', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     expect(state.canHint).toBe(true);
   });
 
   it('is false when no hints', () => {
-    const state = createQuizState(makeDefinitionNoHints());
+    const state = createQuizState(singleDefinitionSession(makeDefinitionNoHints()));
     expect(state.canHint).toBe(false);
   });
 
   it('is false after correct answer', () => {
-    const state = createQuizState(makeDefinition());
+    const state = createQuizState(singleDefinitionSession(makeDefinition()));
     state.input = 'correct';
     state.submit();
     expect(state.canHint).toBe(false);

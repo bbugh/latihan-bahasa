@@ -1,5 +1,6 @@
 import { hydratable } from 'svelte';
-import type { QuizDefinition, QuizCheckResult, QuizPrompt } from '../quiz/definition';
+import type { QuizSession, ActiveQuestion, HydratableQuestion } from '../quiz/session';
+import type { QuizCheckResult } from '../quiz/definition';
 
 /**
  * Generate a value that stays stable across SSR and hydration. Falls back
@@ -15,24 +16,28 @@ function stableValue<T>(key: string, fn: () => T): T {
 }
 
 /**
- * Create a reactive quiz session from a {@link QuizDefinition}. Manages the
- * current prompt, user input, check results, and hint progression using
- * Svelte 5 runes. The returned object exposes getters for the view to bind
- * to and methods (`submit`, `next`, `showHint`) for user actions.
+ * Create a reactive quiz session from a {@link QuizSession}. Manages the
+ * current question, user input, check results, and hint progression using
+ * Svelte 5 runes. Per-question properties (inputMode, instruction, etc.)
+ * update automatically when the session produces a new question.
  */
-export function createQuizState(definition: QuizDefinition) {
-  let prompt: QuizPrompt = $state(stableValue(definition.slug, () => definition.generate()));
-  let hints: string[] = $state(definition.buildHints?.(prompt.answer) ?? []);
+export function createQuizState(session: QuizSession) {
+  const hydrated = stableValue(session.slug, (): HydratableQuestion => {
+    const q = session.generate();
+    return { prompt: q.prompt, defSlug: q.defSlug };
+  });
+  let active: ActiveQuestion = $state(session.fromHydrated(hydrated));
+  let hints: string[] = $state(active.buildHints?.(active.prompt.answer) ?? []);
   let input: string = $state('');
   let result: QuizCheckResult | null = $state(null);
   let hintIndex: number = $state(0);
 
   return {
-    get prompt() { return prompt.prompt; },
-    get answer() { return prompt.answer; },
-    get promptStyle() { return definition.promptStyle; },
-    get inputMode() { return definition.inputMode; },
-    get placeholder() { return definition.placeholder; },
+    get prompt() { return active.prompt.prompt; },
+    get answer() { return active.prompt.answer; },
+    get inputMode() { return active.context.inputMode; },
+    get placeholder() { return active.context.placeholder; },
+    get instruction() { return active.context.instruction; },
 
     get input() { return input; },
     set input(v: string) { input = v; },
@@ -55,12 +60,12 @@ export function createQuizState(definition: QuizDefinition) {
     get canSubmit() { return !result?.correct && !!input.trim(); },
 
     submit() {
-      result = definition.check(prompt.answer, input);
+      result = active.check(active.prompt.answer, input);
     },
 
     next() {
-      prompt = definition.generate(prompt);
-      hints = definition.buildHints?.(prompt.answer) ?? [];
+      active = session.generate(active);
+      hints = active.buildHints?.(active.prompt.answer) ?? [];
       input = '';
       result = null;
       hintIndex = 0;

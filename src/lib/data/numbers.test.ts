@@ -568,7 +568,6 @@ describe('numbersToWords definition', () => {
   it('has correct metadata', () => {
     expect(numbersToWords.slug).toBe('numbers-to-words');
     expect(numbersToWords.category).toBe('Numbers');
-    expect(numbersToWords.promptStyle).toBe('number');
     expect(numbersToWords.inputMode).toBe('text');
   });
 
@@ -608,7 +607,6 @@ describe('wordsToNumbers definition', () => {
   it('has correct metadata', () => {
     expect(wordsToNumbers.slug).toBe('words-to-numbers');
     expect(wordsToNumbers.category).toBe('Numbers');
-    expect(wordsToNumbers.promptStyle).toBe('text');
     expect(wordsToNumbers.inputMode).toBe('numeric');
   });
 

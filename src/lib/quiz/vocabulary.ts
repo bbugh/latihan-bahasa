@@ -201,7 +201,6 @@ export function defineVocabSet(config: VocabSetConfig): VocabSet {
       description: `See ${langName(from)}, type the ${langName(to)}`,
       category,
       instruction: `Type the ${langName(to)} translation`,
-      promptStyle: 'text',
       inputMode: 'text',
       placeholder: 'Type your answer...',
       generate(previous?: QuizPrompt): QuizPrompt {
