@@ -13,4 +13,6 @@
 	});
 </script>
 
-<Quiz {session} />
+{#key data.slug}
+	<Quiz {session} />
+{/key}
